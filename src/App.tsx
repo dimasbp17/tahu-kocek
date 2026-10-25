@@ -354,7 +354,7 @@ function KasirPage() {
   const { settings } = useOutletContext<LayoutContext>();
   const navigate = useNavigate();
   return (
-    <div className="md:max-w-xl md:mx-auto">
+    <div className="md:max-w-xl">
       <KasirTab settings={settings} onSuccess={() => navigate("/")} />
     </div>
   );
@@ -384,7 +384,7 @@ function PengaturanPage() {
 function PengeluaranPage() {
   const navigate = useNavigate();
   return (
-    <div className="md:max-w-xl md:mx-auto">
+    <div className="md:max-w-xl">
       <PengeluaranTab onSuccess={() => navigate("/")} />
     </div>
   );

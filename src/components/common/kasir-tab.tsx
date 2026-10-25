@@ -1,19 +1,14 @@
 import { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Minus, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Settings } from "@/interface/types";
 import { dataPencatat, db, tulisOffline } from "@/firebase";
+import { rupiah } from "@/lib/format";
+import InputAngka from "./input-angka";
+import PilihanSegmen from "./pilihan-segmen";
 import {
   cekVoucher,
   deskripsiPesanan,
@@ -84,53 +79,54 @@ export default function KasirTab({ settings, onSuccess }: Props) {
   );
 
   return (
-    <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300 shadow-md">
-      <CardHeader>
-        <CardTitle>Pesanan Baru</CardTitle>
-        <CardDescription>Catat penjualan masuk.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-3">
-          <Label>Sumber Pesanan</Label>
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant={tipePesanan === "luring" ? "default" : "outline"}
-              className={
-                tipePesanan === "luring" ? "bg-blue-600 hover:bg-blue-700" : ""
-              }
-              onClick={() => setTipePesanan("luring")}
-            >
-              Langsung
-            </Button>
-            <Button
-              variant={tipePesanan === "shopee" ? "default" : "outline"}
-              className={
-                tipePesanan === "shopee" ? "bg-blue-600 hover:bg-blue-700" : ""
-              }
-              onClick={() => setTipePesanan("shopee")}
-            >
-              Shopee Food
-            </Button>
-          </div>
+    <div className="space-y-4 md:space-y-6 animate-in fade-in duration-300">
+      <div>
+        <h2 className="text-xl font-semibold text-zinc-900 md:hidden">
+          Catat Penjualan
+        </h2>
+        <p className="text-sm text-zinc-500">
+          Harga diambil dari Setelan. Pesanan tersimpan atas nama akunmu.
+        </p>
+      </div>
+
+      <section className="rounded-xl bg-white ring-1 ring-zinc-900/10 divide-y overflow-hidden">
+        <div className="space-y-2 p-5">
+          <Label className="text-xs font-medium text-zinc-600">
+            Sumber pesanan
+          </Label>
+          <PilihanSegmen
+            pilihan={[
+              { id: "luring", label: "Langsung" },
+              { id: "shopee", label: "Shopee Food" },
+            ]}
+            nilai={tipePesanan}
+            onPilih={setTipePesanan}
+          />
         </div>
 
-        <div className="space-y-3">
-          <Label>Jumlah Porsi</Label>
-          <div className="flex items-center justify-between p-1 bg-zinc-100 rounded-lg border">
+        <div className="space-y-2 p-5">
+          <Label className="text-xs font-medium text-zinc-600">
+            Jumlah porsi
+          </Label>
+          <div className="flex items-center justify-between gap-3 rounded-lg ring-1 ring-zinc-900/10 p-1.5">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setQty(Math.max(1, qty - 1))}
-              className="h-12 w-12 text-zinc-600"
+              aria-label="Kurangi porsi"
+              className="h-11 w-11 text-zinc-600"
             >
               <Minus />
             </Button>
-            <span className="text-3xl font-bold text-zinc-800">{qty}</span>
+            <span className="text-3xl font-semibold text-zinc-900 tabular-nums">
+              {qty}
+            </span>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setQty(qty + 1)}
-              className="h-12 w-12 text-zinc-600"
+              aria-label="Tambah porsi"
+              className="h-11 w-11 text-zinc-600"
             >
               <Plus />
             </Button>
@@ -138,67 +134,68 @@ export default function KasirTab({ settings, onSuccess }: Props) {
         </div>
 
         {tipePesanan === "shopee" && (
-          <div className="space-y-3 bg-blue-50 p-4 rounded-lg border border-blue-100">
-            <Label className="text-blue-800">Potongan Voucher (Rp)</Label>
-            <Input
-              type="number"
+          <div className="p-5">
+            <InputAngka
+              id="voucher"
+              label="Potongan voucher"
+              awalan="Rp"
               min={0}
               value={potonganVoucher}
               onChange={(e) => setPotonganVoucher(e.target.value)}
-              placeholder="Contoh: 3000"
-              className="bg-white border-blue-200"
+              placeholder="0"
             />
           </div>
         )}
 
-        {/* <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 mb-4">
-          <p className="text-sm text-emerald-800 flex justify-between">
-            Total Tagihan:{" "}
-            <strong>Rp {totalHarga.toLocaleString("id-ID")}</strong>
-          </p>
-          <p className="text-sm text-emerald-800 flex justify-between mt-1">
-            Estimasi Untung Bersih:{" "}
-            <strong>Rp {labaBersihPratinjau.toLocaleString("id-ID")}</strong>
-          </p>
-        </div> */}
-
-        <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 space-y-1">
-          <p className="text-sm text-emerald-800 flex justify-between">
-            <span>Harga Jual</span>
-            <strong>Rp {hargaJual.toLocaleString("id-ID")}</strong>
-          </p>
+        <dl className="space-y-2 bg-zinc-50 p-5 text-sm">
+          <div className="flex justify-between gap-3">
+            <dt className="text-zinc-500">Harga jual</dt>
+            <dd className="text-zinc-900 tabular-nums">{rupiah(hargaJual)}</dd>
+          </div>
           {komisiShopee > 0 && (
-            <p className="text-sm text-rose-600 flex justify-between">
-              <span>Komisi Shopee ({settings.komisiShopee}%)</span>
-              <strong>- Rp {komisiShopee.toLocaleString("id-ID")}</strong>
-            </p>
+            <div className="flex justify-between gap-3">
+              <dt className="text-zinc-500">
+                Komisi Shopee ({settings.komisiShopee}%)
+              </dt>
+              <dd className="text-zinc-900 tabular-nums">
+                −{rupiah(komisiShopee)}
+              </dd>
+            </div>
           )}
           {diskonPratinjau > 0 && (
-            <p className="text-sm text-rose-600 flex justify-between">
-              <span>Potongan Voucher</span>
-              <strong>- Rp {diskonPratinjau.toLocaleString("id-ID")}</strong>
-            </p>
+            <div className="flex justify-between gap-3">
+              <dt className="text-zinc-500">Potongan voucher</dt>
+              <dd className="text-zinc-900 tabular-nums">
+                −{rupiah(diskonPratinjau)}
+              </dd>
+            </div>
           )}
-          <div className="border-t border-emerald-200 pt-1 flex justify-between">
-            <span className="text-sm text-emerald-800">Yang Diterima</span>
-            <strong className="text-emerald-800">
-              Rp {totalHarga.toLocaleString("id-ID")}
-            </strong>
+          <div className="flex justify-between gap-3 border-t pt-2">
+            <dt className="font-medium text-zinc-900">Yang diterima</dt>
+            <dd className="text-base font-semibold text-zinc-900 tabular-nums">
+              {rupiah(totalHarga)}
+            </dd>
           </div>
-          <p className="text-sm text-emerald-800 flex justify-between">
-            <span>Estimasi Untung Bersih</span>
-            <strong>Rp {labaBersihPratinjau.toLocaleString("id-ID")}</strong>
-          </p>
-        </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-zinc-500">Estimasi laba</dt>
+            <dd
+              className={`font-medium tabular-nums ${labaBersihPratinjau < 0 ? "text-[#d03b3b]" : "text-[#006300]"}`}
+            >
+              {rupiah(labaBersihPratinjau)}
+            </dd>
+          </div>
+        </dl>
 
-        <Button
-          onClick={simpanPesanan}
-          disabled={saving}
-          className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-md"
-        >
-          {saving ? "Menyimpan..." : "Simpan Transaksi"}
-        </Button>
-      </CardContent>
-    </Card>
+        <div className="flex justify-end px-5 py-3">
+          <Button
+            onClick={simpanPesanan}
+            disabled={saving}
+            className="w-full md:w-auto bg-blue-600 hover:bg-blue-700"
+          >
+            {saving ? "Menyimpan..." : "Simpan Penjualan"}
+          </Button>
+        </div>
+      </section>
+    </div>
   );
 }

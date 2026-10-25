@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { Settings } from "@/interface/types";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { auth, keluar } from "@/firebase";
+import InputAngka from "./input-angka";
 
 // Satu baris setelan: judul & penjelasan di kiri, isian di kanan (desktop)
 function Baris({
@@ -23,57 +22,6 @@ function Baris({
         <p className="mt-0.5 text-xs text-zinc-500">{deskripsi}</p>
       </div>
       <div className="md:col-span-2">{children}</div>
-    </div>
-  );
-}
-
-// Isian angka dengan awalan (Rp) atau akhiran (%)
-function InputAngka({
-  id,
-  label,
-  value,
-  onChange,
-  awalan,
-  akhiran,
-  min,
-  max,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  awalan?: string;
-  akhiran?: string;
-  min?: number;
-  max?: number;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs font-medium text-zinc-600">
-        {label}
-      </Label>
-      <div className="relative">
-        {awalan && (
-          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
-            {awalan}
-          </span>
-        )}
-        <Input
-          id={id}
-          type="number"
-          inputMode="numeric"
-          min={min}
-          max={max}
-          value={value}
-          onChange={onChange}
-          className={`h-10 font-medium tabular-nums ${awalan ? "pl-10" : ""} ${akhiran ? "pr-8" : ""}`}
-        />
-        {akhiran && (
-          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
-            {akhiran}
-          </span>
-        )}
-      </div>
     </div>
   );
 }
