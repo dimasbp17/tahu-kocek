@@ -7,7 +7,14 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from "firebase/firestore";
 import {
   FileText,
   Home,
@@ -27,7 +34,7 @@ import {
   NavLink,
   useNavigate,
 } from "react-router-dom";
-import { auth, db, keluar } from "./firebase";
+import { auth, db, keluar, tulisOffline } from "./firebase";
 import { useOnline } from "./hooks/use-online";
 import KasirTab from "./components/common/kasir-tab";
 import LoginScreen from "./components/common/login-screen";
@@ -36,6 +43,14 @@ import PengaturanTab from "./components/common/pengaturan-tab";
 import PengeluaranTab from "./components/common/pengeluaran-tab";
 import type { Settings, Transaction } from "./interface/types";
 
+const DEFAULT_SETTINGS: Settings = {
+  hargaLuring: 10000,
+  hargaShopee: 12500,
+  hppPerPorsi: 6000,
+  tanggalSiklus: 25,
+  komisiShopee: 30,
+};
+
 // ─── Context / shared state ──────────────────────────────────────────────────
 // Settings & transactions di-lift ke layout supaya semua route bisa akses
 function Layout() {
@@ -43,24 +58,19 @@ function Layout() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   // false sampai data pertama berhasil diambil, supaya Beranda tidak sempat tampil kosong
   const [dataSiap, setDataSiap] = useState(false);
+  const [setelanSiap, setSetelanSiap] = useState(false);
+  // false selama setelan bersama belum pernah disimpan ke Firestore
+  const [setelanTersimpan, setSetelanTersimpan] = useState(true);
   const online = useOnline();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  // Setelan lama di perangkat ini hanya dipakai sampai setelan bersama di Firestore pertama kali disimpan
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem("tahuKocekSettings");
-    const defaults: Settings = {
-      hargaLuring: 10000,
-      hargaShopee: 12500,
-      hppPerPorsi: 6000,
-      tanggalSiklus: 25,
-      komisiShopee: 30,
-    };
     // Digabung dengan default supaya setelan lama yang belum punya field baru tetap lengkap
-    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+    return saved
+      ? { ...DEFAULT_SETTINGS, ...JSON.parse(saved) }
+      : DEFAULT_SETTINGS;
   });
-
-  useEffect(() => {
-    localStorage.setItem("tahuKocekSettings", JSON.stringify(settings));
-  }, [settings]);
 
   useEffect(
     () =>
@@ -69,6 +79,7 @@ function Layout() {
         // Kosongkan data akun sebelumnya saat ganti akun
         setTransactions([]);
         setDataSiap(false);
+        setSetelanSiap(false);
       }),
     [],
   );
@@ -102,13 +113,44 @@ function Layout() {
     return () => unsubscribe();
   }, [user]);
 
+  // Setelan bersama untuk semua perangkat
+  useEffect(() => {
+    if (!user) return;
+    return onSnapshot(
+      doc(db, "pengaturan", "umum"),
+      (snap) => {
+        setSetelanTersimpan(snap.exists());
+        if (snap.exists()) {
+          setSettings({
+            ...DEFAULT_SETTINGS,
+            ...(snap.data() as Partial<Settings>),
+          });
+        }
+        setSetelanSiap(true);
+      },
+      (err) => {
+        // Tidak dikeluarkan di sini: penolakan akses sudah ditangani listener transaksi
+        if (err.code !== "permission-denied") {
+          toast.error("Gagal memuat setelan: " + err.message);
+        }
+        setSetelanSiap(true);
+      },
+    );
+  }, [user]);
+
+  const simpanSettings = (baru: Settings) =>
+    tulisOffline(
+      setDoc(doc(db, "pengaturan", "umum"), baru),
+      "Gagal menyimpan setelan",
+    );
+
   const navItems = [
     { to: "/", icon: Home, label: "Beranda" },
     { to: "/laporan", icon: FileText, label: "Laporan" },
     { to: "/pengaturan", icon: SettingsIcon, label: "Setelan" },
   ];
 
-  if (user === undefined || (user && !dataSiap)) {
+  if (user === undefined || (user && !(dataSiap && setelanSiap))) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-zinc-500 font-sans">
         Memuat...
@@ -192,7 +234,14 @@ function Layout() {
 
         <main className="p-4 space-y-6 md:p-8 md:max-w-5xl md:mx-auto md:w-full">
           {/* Outlet menerima props lewat context */}
-          <Outlet context={{ transactions, settings, setSettings }} />
+          <Outlet
+            context={{
+              transactions,
+              settings,
+              setelanTersimpan,
+              simpanSettings,
+            }}
+          />
         </main>
 
         <nav className="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around p-2 pb-safe shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-50 md:hidden">
@@ -250,7 +299,8 @@ import { useOutletContext } from "react-router-dom";
 type LayoutContext = {
   transactions: Transaction[];
   settings: Settings;
-  setSettings: React.Dispatch<React.SetStateAction<Settings>>;
+  setelanTersimpan: boolean;
+  simpanSettings: (s: Settings) => boolean;
 };
 
 function Dashboard() {
@@ -433,10 +483,17 @@ function LaporanPage() {
 }
 
 function PengaturanPage() {
-  const { settings, setSettings } = useOutletContext<LayoutContext>();
+  const { settings, setelanTersimpan, simpanSettings } =
+    useOutletContext<LayoutContext>();
   return (
     <div className="md:max-w-xl md:mx-auto">
-      <PengaturanTab settings={settings} setSettings={setSettings} />
+      {/* key: form ikut diperbarui saat setelan berubah dari perangkat lain */}
+      <PengaturanTab
+        key={JSON.stringify(settings)}
+        settings={settings}
+        setelanTersimpan={setelanTersimpan}
+        simpanSettings={simpanSettings}
+      />
     </div>
   );
 }
