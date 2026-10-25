@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { deleteDoc, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
-import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Download, Pencil, Trash2 } from "lucide-react";
+import { Download, LayoutGrid, Table2 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Settings, Transaction } from "@/interface/types";
 import { db, tulisOffline } from "@/firebase";
@@ -20,10 +19,23 @@ import { eksporExcel } from "@/lib/ekspor-excel";
 import { rupiah } from "@/lib/format";
 import { hitungRingkasan } from "@/lib/ringkasan";
 import EditTransaksiDialog from "./edit-transaksi-dialog";
+import RiwayatTransaksi, { type TampilanRiwayat } from "./riwayat-transaksi";
 
 interface Props {
   transactions: Transaction[];
   settings: Settings;
+}
+
+const KUNCI_TAMPILAN = "tahuKocekTampilanRiwayat";
+
+// Tampilan riwayat diingat per perangkat; bawaannya tabel
+function bacaTampilan(): TampilanRiwayat {
+  try {
+    if (localStorage.getItem(KUNCI_TAMPILAN) === "kartu") return "kartu";
+  } catch {
+    // localStorage bisa tidak tersedia; pakai bawaan
+  }
+  return "tabel";
 }
 
 type FilterPeriod = "hari" | "minggu" | "bulan" | "semua";
@@ -50,6 +62,16 @@ export default function LaporanTab({ transactions, settings }: Props) {
   const [hapusId, setHapusId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [mengekspor, setMengekspor] = useState(false);
+  const [tampilan, setTampilan] = useState<TampilanRiwayat>(bacaTampilan);
+
+  const pilihTampilan = (t: TampilanRiwayat) => {
+    setTampilan(t);
+    try {
+      localStorage.setItem(KUNCI_TAMPILAN, t);
+    } catch {
+      // Tidak masalah kalau gagal disimpan
+    }
+  };
 
   // Dicari dari data terbaru supaya dialog tertutup kalau transaksinya dihapus perangkat lain
   const transaksiEdit = transactions.find((t) => t.id === editId);
@@ -193,91 +215,61 @@ export default function LaporanTab({ transactions, settings }: Props) {
         ))}
       </div>
 
-      {/* List transaksi */}
-      <div className="border-none bg-transparent shadow-none">
-        <CardHeader className="mb-3 flex items-center justify-between gap-3">
-          <CardTitle className="text-base">
+      {/* Riwayat transaksi */}
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="text-base font-semibold text-zinc-900">
             Riwayat{" "}
-            <span className="text-zinc-400 font-normal text-sm">
+            <span className="text-sm font-normal text-zinc-400">
               ({filtered.length} transaksi)
             </span>
-          </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={ekspor}
-            disabled={mengekspor}
-            className="shrink-0"
-          >
-            <Download size={14} />
-            {mengekspor ? "Menyiapkan..." : "Excel"}
-          </Button>
-        </CardHeader>
-        <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-          {filtered.length === 0 ? (
-            <p className="text-zinc-500 text-center p-8 bg-white rounded-lg border border-dashed lg:col-span-2">
-              Belum ada transaksi.
-            </p>
-          ) : (
-            filtered.map((t) => (
-              <div
-                key={t.id}
-                className="flex items-center justify-between bg-white p-4 rounded-xl border shadow-sm"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-zinc-900 truncate">
-                    {t.desc}
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-1">
-                    {new Date(t.date).toLocaleString("id-ID", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      day: "numeric",
-                      month: "short",
-                    })}
-                    {t.createdBy && ` · oleh ${t.createdBy.split(" ")[0]}`}
-                    {t.editedBy && " · diedit"}
-                  </p>
-                  {t.type === "IN" && t.netProfit !== undefined && (
-                    <p className="text-xs font-semibold text-emerald-600 mt-1 bg-emerald-50 inline-block px-2 py-1 rounded">
-                      Estimasi Laba: Rp {t.netProfit.toLocaleString("id-ID")}
-                    </p>
-                  )}
-                </div>
-                <div className="flex flex-col items-end gap-2 pl-3">
-                  <div
-                    className={`font-bold whitespace-nowrap ${t.type === "IN" ? "text-blue-600" : "text-rose-600"}`}
-                  >
-                    {t.type === "IN" ? "+" : "-"} Rp{" "}
-                    {t.amount.toLocaleString("id-ID")}
-                  </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setEditId(t.id)}
-                      title="Edit"
-                      aria-label="Edit transaksi"
-                      className="h-8 w-8 text-zinc-500 hover:bg-zinc-100 shrink-0"
-                    >
-                      <Pencil size={16} />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setHapusId(t.id)}
-                      title="Hapus"
-                      aria-label="Hapus transaksi"
-                      className="h-8 w-8 text-rose-500 hover:bg-rose-100 shrink-0"
-                    >
-                      <Trash2 size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
+          </h3>
+          <div className="flex items-center gap-2">
+            <div
+              className="inline-flex rounded-lg bg-zinc-200/60 p-1"
+              role="group"
+              aria-label="Tampilan riwayat"
+            >
+              {(
+                [
+                  { id: "tabel", label: "Tabel", Ikon: Table2 },
+                  { id: "kartu", label: "Kartu", Ikon: LayoutGrid },
+                ] as const
+              ).map(({ id, label, Ikon }) => (
+                <button
+                  key={id}
+                  onClick={() => pilihTampilan(id)}
+                  aria-pressed={tampilan === id}
+                  className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                    tampilan === id
+                      ? "bg-white text-zinc-900 shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-900"
+                  }`}
+                >
+                  <Ikon size={14} />
+                  {label}
+                </button>
+              ))}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={ekspor}
+              disabled={mengekspor}
+              className="shrink-0"
+            >
+              <Download size={14} />
+              {mengekspor ? "Menyiapkan..." : "Excel"}
+            </Button>
+          </div>
         </div>
+
+        <RiwayatTransaksi
+          transaksi={filtered}
+          tampilan={tampilan}
+          onEdit={setEditId}
+          onHapus={setHapusId}
+        />
       </div>
     </div>
   );
