@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Settings } from "@/interface/types";
-import { db } from "@/firebase";
+import { dataPencatat, db } from "@/firebase";
 
 interface Props {
   settings: Settings;
@@ -48,6 +48,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
         discount: diskonPratinjau,
         netProfit: labaBersihPratinjau, // Simpan untung bersih ke Firebase
         date: new Date().toISOString(),
+        ...dataPencatat(),
         desc: `Pesanan ${tipePesanan === "luring" ? "Luring" : "Shopee"} (${qty} porsi)${diskonPratinjau > 0 ? ` - Diskon Rp${diskonPratinjau.toLocaleString("id-ID")}` : ""}`,
       });
       setQty(1);

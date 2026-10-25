@@ -9,6 +9,8 @@ export interface Transaction {
   netProfit?: number; // Tambahan: Keuntungan bersih per penjualan
   date: string;
   desc: string;
+  createdBy?: string; // Nama akun pencatat (transaksi lama tidak punya)
+  createdByEmail?: string;
 }
 
 export interface Settings {

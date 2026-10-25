@@ -14,3 +14,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
 export const auth = getAuth(app);
+
+// Identitas akun yang sedang login, disimpan di setiap transaksi baru
+export function dataPencatat() {
+  const user = auth.currentUser;
+  return {
+    createdBy: user?.displayName ?? user?.email ?? "",
+    createdByEmail: user?.email ?? "",
+  };
+}

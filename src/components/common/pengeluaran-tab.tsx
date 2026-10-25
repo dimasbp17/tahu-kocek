@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import { db } from "@/firebase";
+import { dataPencatat, db } from "@/firebase";
 
 interface Props {
   onSuccess: () => void;
@@ -38,6 +38,7 @@ export default function PengeluaranTab({ onSuccess }: Props) {
         category: tipeKeluar, // Menandai apakah ini belanja modal atau tarik laba
         amount: parseInt(nominal),
         date: new Date().toISOString(),
+        ...dataPencatat(),
         desc:
           tipeKeluar === "tarik" ? `[Tarik Laba] ${keterangan}` : keterangan,
       });

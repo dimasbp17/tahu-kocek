@@ -249,6 +249,7 @@ export default function LaporanTab({ transactions }: Props) {
                       day: "numeric",
                       month: "short",
                     })}
+                    {t.createdBy && ` · oleh ${t.createdBy.split(" ")[0]}`}
                   </p>
                   {t.type === "IN" && t.netProfit !== undefined && (
                     <p className="text-xs font-semibold text-emerald-600 mt-1 bg-emerald-50 inline-block px-2 py-1 rounded">
