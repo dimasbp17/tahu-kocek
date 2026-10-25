@@ -33,7 +33,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-zinc-50 flex items-center justify-center p-4 font-sans">
       <Card className="w-full max-w-sm shadow-md animate-in fade-in slide-in-from-bottom-4 duration-300">
         <CardHeader>
           <CardTitle className="text-xl">Tahu Kocek DL</CardTitle>

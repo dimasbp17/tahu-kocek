@@ -1,13 +1,5 @@
 import type { Transaction } from "@/interface/types";
-
-export interface RingkasanLaporan {
-  omset: number;
-  laba: number;
-  belanja: number;
-  tarik: number;
-  porsi: number;
-  labaReal: number;
-}
+import type { Ringkasan } from "@/lib/ringkasan";
 
 // Library Excel membaca Date sebagai UTC, jadi digeser supaya jam di Excel sama dengan jam lokal (WIB)
 function jamLokal(iso: string) {
@@ -22,7 +14,7 @@ function tanggalFile(d: Date) {
 
 export async function eksporExcel(
   transaksi: Transaction[],
-  ringkasan: RingkasanLaporan,
+  ringkasan: Ringkasan,
   periode: { id: string; label: string },
 ) {
   // Dimuat saat dibutuhkan saja supaya tidak menambah beban saat aplikasi dibuka

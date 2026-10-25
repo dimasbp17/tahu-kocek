@@ -20,8 +20,8 @@ export default defineConfig({
         lang: "id",
         start_url: "/",
         display: "standalone",
-        theme_color: "#2563eb",
-        background_color: "#f1f5f9",
+        theme_color: "#ffffff",
+        background_color: "#fafafa",
         icons: [
           {
             src: "/tahu.png",

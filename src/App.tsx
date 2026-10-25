@@ -1,11 +1,4 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import {
   collection,
@@ -17,13 +10,9 @@ import {
 } from "firebase/firestore";
 import {
   FileText,
-  Home,
+  LayoutDashboard,
   LogOut,
-  Minus,
-  Plus,
   Settings as SettingsIcon,
-  ShoppingBag,
-  TrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -41,6 +30,7 @@ import LoginScreen from "./components/common/login-screen";
 import LaporanTab from "./components/common/laporan-tab";
 import PengaturanTab from "./components/common/pengaturan-tab";
 import PengeluaranTab from "./components/common/pengeluaran-tab";
+import RingkasanTab from "./components/common/ringkasan-tab";
 import type { Settings, Transaction } from "./interface/types";
 
 const DEFAULT_SETTINGS: Settings = {
@@ -145,14 +135,14 @@ function Layout() {
     );
 
   const navItems = [
-    { to: "/", icon: Home, label: "Beranda" },
+    { to: "/", icon: LayoutDashboard, label: "Ringkasan" },
     { to: "/laporan", icon: FileText, label: "Laporan" },
     { to: "/pengaturan", icon: SettingsIcon, label: "Setelan" },
   ];
 
   if (user === undefined || (user && !(dataSiap && setelanSiap))) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-zinc-500 font-sans">
+      <div className="min-h-screen bg-zinc-50 flex items-center justify-center text-sm text-zinc-500 font-sans">
         Memuat...
       </div>
     );
@@ -160,11 +150,14 @@ function Layout() {
   if (!user) return <LoginScreen />;
 
   return (
-    <div className="font-sans md:flex md:min-h-screen md:bg-slate-100">
+    <div className="font-sans md:flex md:min-h-screen md:bg-zinc-50">
       {/* Sidebar khusus desktop */}
       <aside className="hidden md:flex flex-col w-60 shrink-0 sticky top-0 h-screen bg-white border-r">
-        <div className="bg-blue-600 text-white p-5">
-          <h1 className="text-xl font-bold tracking-tight">Tahu Kocek DL</h1>
+        <div className="flex items-center gap-2.5 px-5 h-16 border-b">
+          <img src="/tahu.png" alt="" className="h-8 w-8" />
+          <h1 className="text-base font-semibold tracking-tight text-zinc-900">
+            Tahu Kocek DL
+          </h1>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {navItems.map(({ to, icon: Icon, label }) => (
@@ -173,14 +166,14 @@ function Layout() {
               to={to}
               end={to === "/"}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-blue-50 text-blue-600"
-                    : "text-zinc-500 hover:bg-zinc-50"
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                 }`
               }
             >
-              <Icon size={20} />
+              <Icon size={18} />
               {label}
             </NavLink>
           ))}
@@ -206,11 +199,16 @@ function Layout() {
         </div>
       </aside>
 
-      <div className="max-w-md mx-auto rounded-xl bg-slate-100 min-h-screen pb-24 font-sans md:max-w-none md:mx-0 md:flex-1 md:min-w-0 md:rounded-none md:pb-0">
-        <header className="bg-blue-600 text-white p-5 shadow-sm sticky top-0 z-10 flex items-center justify-between gap-3 md:hidden">
-          <h1 className="text-xl font-bold tracking-tight">Tahu Kocek DL</h1>
+      <div className="max-w-md mx-auto bg-zinc-50 min-h-screen pb-24 font-sans md:max-w-none md:mx-0 md:flex-1 md:min-w-0 md:pb-0">
+        <header className="bg-white border-b px-4 h-14 sticky top-0 z-10 flex items-center justify-between gap-3 md:hidden">
+          <div className="flex items-center gap-2">
+            <img src="/tahu.png" alt="" className="h-7 w-7" />
+            <h1 className="text-base font-semibold tracking-tight text-zinc-900">
+              Tahu Kocek DL
+            </h1>
+          </div>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="text-sm font-medium truncate">
+            <span className="text-sm text-zinc-600 truncate">
               {user.displayName?.split(" ")[0] ?? user.email}
             </span>
             <Avatar user={user} />
@@ -218,7 +216,7 @@ function Layout() {
               onClick={keluar}
               title="Keluar"
               aria-label="Keluar"
-              className="shrink-0 p-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+              className="shrink-0 p-1.5 rounded-lg text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900 transition-colors"
             >
               <LogOut size={20} />
             </button>
@@ -232,7 +230,7 @@ function Layout() {
           </div>
         )}
 
-        <main className="p-4 space-y-6 md:p-8 md:max-w-5xl md:mx-auto md:w-full">
+        <main className="p-4 space-y-6 md:p-8 md:max-w-6xl md:mx-auto md:w-full">
           {/* Outlet menerima props lewat context */}
           <Outlet
             context={{
@@ -244,7 +242,7 @@ function Layout() {
           />
         </main>
 
-        <nav className="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around p-2 pb-safe shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-50 md:hidden">
+        <nav className="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around p-2 pb-safe z-50 md:hidden">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -252,14 +250,16 @@ function Layout() {
               end={to === "/"}
               className={({ isActive }) =>
                 `flex flex-col items-center p-2 transition-colors rounded-lg ${
-                  isActive ? "text-blue-600" : "text-zinc-400 hover:bg-zinc-50"
+                  isActive ? "text-blue-700" : "text-zinc-400 hover:bg-zinc-50"
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={24} className={isActive ? "fill-blue-50" : ""} />
-                  <span className="text-[10px] font-bold mt-1">{label}</span>
+                  <Icon size={22} className={isActive ? "fill-blue-50" : ""} />
+                  <span className="text-[10px] font-semibold mt-1">
+                    {label}
+                  </span>
                 </>
               )}
             </NavLink>
@@ -306,173 +306,13 @@ type LayoutContext = {
 function Dashboard() {
   const { transactions } = useOutletContext<LayoutContext>();
   const navigate = useNavigate();
-
-  // Pakai jam lokal (WIB), bukan UTC, supaya hari baru mulai jam 00.00
-  const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-  );
-  const todayTransactions = transactions.filter(
-    (t) => new Date(t.date) >= startOfToday,
-  );
-
-  const totalPemasukan = todayTransactions
-    .filter((t) => t.type === "IN")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const pengeluaranBelanja = todayTransactions
-    .filter((t) => t.type === "OUT" && t.category !== "tarik")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const pengeluaranTarik = todayTransactions
-    .filter((t) => t.type === "OUT" && t.category === "tarik")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  // Pendapatan Shopee masuk ke saldo merchant, bukan tunai di laci
-  const pendapatanShopee = todayTransactions
-    .filter((t) => t.type === "IN" && t.source === "shopee")
-    .reduce((sum, t) => sum + t.amount, 0);
-
-  const arusKas = totalPemasukan - pengeluaranBelanja - pengeluaranTarik;
-  const labaReal = totalPemasukan - pengeluaranBelanja;
-
-  const porsiLaku = todayTransactions
-    .filter((t) => t.type === "IN")
-    .reduce((sum, t) => sum + (t.qty || 0), 0);
-
-  const labaPerPorsi = todayTransactions
-    .filter((t) => t.type === "IN")
-    .reduce((sum, t) => sum + (t.netProfit || 0), 0);
-
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
-      <Card className="border-blue-100 shadow-md lg:col-span-2">
-        <CardHeader className="pb-2">
-          <CardDescription>Arus Kas Hari Ini</CardDescription>
-          <CardTitle className="text-4xl text-zinc-900 font-semibold">
-            Rp {arusKas.toLocaleString("id-ID")}
-          </CardTitle>
-          {pendapatanShopee > 0 && (
-            <p className="text-xs text-zinc-500">
-              Termasuk Rp {pendapatanShopee.toLocaleString("id-ID")} dari Shopee
-              Food (masuk ke saldo merchant, bukan tunai)
-            </p>
-          )}
-        </CardHeader>
-      </Card>
-
-      <div className="grid grid-cols-2 gap-3 lg:col-span-2 lg:gap-4">
-        <Card className="bg-emerald-50 border-emerald-100 shadow-sm">
-          <CardContent>
-            <div className="flex items-center gap-2 text-emerald-700 mb-2">
-              <ShoppingBag size={16} />
-              <span className="text-xs font-bold uppercase">Pendapatan</span>
-            </div>
-            <p className="text-lg font-bold text-emerald-900">
-              Rp {totalPemasukan.toLocaleString("id-ID")}
-            </p>
-            <p className="text-xs text-emerald-600 mt-1">
-              {porsiLaku} porsi · setelah komisi & voucher
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-amber-50 border-amber-100 shadow-sm">
-          <CardContent>
-            <div className="flex items-center gap-2 text-amber-700 mb-2">
-              <TrendingUp size={16} />
-              <span className="text-xs font-bold uppercase">Estimasi Laba</span>
-            </div>
-            <p className="text-lg font-bold text-amber-900">
-              Rp {labaPerPorsi.toLocaleString("id-ID")}
-            </p>
-            <p className="text-xs text-amber-600 mt-1">Pendapatan − HPP</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card
-        className={`col-span-2 shadow-sm lg:col-span-1 lg:col-start-3 lg:row-start-2 ${labaReal >= 0 ? "bg-white" : "bg-rose-50 border-rose-100"}`}
-      >
-        <CardContent className="space-y-3">
-          <div
-            className={`flex items-center gap-2 ${labaReal >= 0 ? "text-indigo-700" : "text-rose-700"}`}
-          >
-            <TrendingUp size={16} />
-            <span className="text-xs font-bold uppercase">
-              Laba Bersih Real
-            </span>
-          </div>
-
-          <div className="space-y-1 text-sm text-zinc-600">
-            <div className="flex justify-between">
-              <span>Pendapatan</span>
-              <span className="font-semibold text-zinc-800">
-                Rp {totalPemasukan.toLocaleString("id-ID")}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span>Belanja Bahan</span>
-              <span className="font-semibold text-rose-600">
-                - Rp {pengeluaranBelanja.toLocaleString("id-ID")}
-              </span>
-            </div>
-            <div className="border-t border-zinc-200 pt-1 flex justify-between">
-              <span className="font-bold text-zinc-800">Untung</span>
-              <span
-                className={`font-bold text-lg ${labaReal >= 0 ? "text-indigo-700" : "text-rose-700"}`}
-              >
-                Rp {labaReal.toLocaleString("id-ID")}
-              </span>
-            </div>
-            {pengeluaranTarik > 0 && (
-              <>
-                <div className="flex justify-between text-zinc-500">
-                  <span>Sudah Ditarik</span>
-                  <span className="font-semibold text-amber-600">
-                    - Rp {pengeluaranTarik.toLocaleString("id-ID")}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="font-bold text-zinc-800">Sisa di Kas</span>
-                  <span className="font-bold text-zinc-900">
-                    Rp {arusKas.toLocaleString("id-ID")}
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div
-            className={`text-xs font-bold px-3 py-1.5 rounded-full inline-block ${labaReal >= 0 ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}
-          >
-            {labaReal >= 0
-              ? "✓ Modal sudah balik"
-              : `Kurang Rp ${Math.abs(labaReal).toLocaleString("id-ID")} lagi balik modal`}
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-2 gap-4 pt-2 lg:col-start-3 lg:row-start-1 lg:grid-cols-1 lg:content-center lg:gap-3 lg:pt-0">
-        <Button
-          onClick={() => navigate("/kasir")}
-          size="lg"
-          className=" bg-blue-600 hover:bg-blue-700 shadow-lg"
-        >
-          <Plus className="h-4 w-4" /> Jual
-        </Button>
-        <Button
-          onClick={() => navigate("/pengeluaran")}
-          size="lg"
-          variant="outline"
-          className=" border-zinc-300 text-zinc-700 shadow-sm"
-        >
-          <Minus className="h-4 w-4" /> Modal
-        </Button>
-      </div>
-    </div>
+    <RingkasanTab
+      transactions={transactions}
+      onJual={() => navigate("/kasir")}
+      onModal={() => navigate("/pengeluaran")}
+      onLihatSemua={() => navigate("/laporan")}
+    />
   );
 }
 

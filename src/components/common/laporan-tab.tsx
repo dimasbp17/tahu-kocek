@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { deleteDoc, doc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,18 +12,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Download,
-  Pencil,
-  Trash2,
-  ShoppingBag,
-  TrendingUp,
-  TrendingDown,
-} from "lucide-react";
+import { Download, Pencil, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Settings, Transaction } from "@/interface/types";
 import { db, tulisOffline } from "@/firebase";
 import { eksporExcel } from "@/lib/ekspor-excel";
+import { rupiah } from "@/lib/format";
+import { hitungRingkasan } from "@/lib/ringkasan";
 import EditTransaksiDialog from "./edit-transaksi-dialog";
 
 interface Props {
@@ -65,26 +60,7 @@ export default function LaporanTab({ transactions, settings }: Props) {
     return transactions.filter((t) => new Date(t.date) >= start);
   }, [transactions, period]);
 
-  const summary = useMemo(() => {
-    const omset = filtered
-      .filter((t) => t.type === "IN")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const laba = filtered
-      .filter((t) => t.type === "IN")
-      .reduce((sum, t) => sum + (t.netProfit || 0), 0);
-    // Tarik laba bukan biaya, jadi dipisah dari belanja bahan
-    const belanja = filtered
-      .filter((t) => t.type === "OUT" && t.category !== "tarik")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const tarik = filtered
-      .filter((t) => t.type === "OUT" && t.category === "tarik")
-      .reduce((sum, t) => sum + t.amount, 0);
-    const porsi = filtered
-      .filter((t) => t.type === "IN")
-      .reduce((sum, t) => sum + (t.qty || 0), 0);
-    const labaReal = omset - belanja;
-    return { omset, laba, belanja, tarik, porsi, labaReal };
-  }, [filtered]);
+  const summary = useMemo(() => hitungRingkasan(filtered), [filtered]);
 
   const konfirmasiHapus = () => {
     if (!hapusId) return;
@@ -113,9 +89,9 @@ export default function LaporanTab({ transactions, settings }: Props) {
   };
 
   const periods: { id: FilterPeriod; label: string }[] = [
-    { id: "hari", label: "Hari Ini" },
-    { id: "minggu", label: "7 Hari" },
-    { id: "bulan", label: "Bulan Ini" },
+    { id: "hari", label: "Hari ini" },
+    { id: "minggu", label: "7 hari" },
+    { id: "bulan", label: "Bulan ini" },
     { id: "semua", label: "Semua" },
   ];
 
@@ -154,16 +130,23 @@ export default function LaporanTab({ transactions, settings }: Props) {
         />
       )}
 
+      <div>
+        <h2 className="text-xl font-semibold text-zinc-900">Laporan</h2>
+        <p className="text-sm text-zinc-500">
+          Ringkasan dan riwayat semua transaksi
+        </p>
+      </div>
+
       {/* Filter */}
-      <div className="flex gap-2 md:max-w-md">
+      <div className="inline-flex w-full md:w-auto rounded-lg bg-zinc-200/60 p-1">
         {periods.map((p) => (
           <button
             key={p.id}
             onClick={() => setPeriod(p.id)}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-colors ${
+            className={`flex-1 md:flex-none px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               period === p.id
-                ? "bg-blue-600 text-white"
-                : "bg-white text-zinc-500 border hover:bg-zinc-50"
+                ? "bg-white text-zinc-900 shadow-sm"
+                : "text-zinc-500 hover:text-zinc-900"
             }`}
           >
             {p.label}
@@ -171,90 +154,41 @@ export default function LaporanTab({ transactions, settings }: Props) {
         ))}
       </div>
 
-      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-2 lg:space-y-0">
-        {/* Ringkasan Baris 1 */}
-        <div className="grid grid-cols-2 gap-2">
-          <Card className="bg-emerald-50 border-emerald-100 shadow-sm">
-            <CardContent>
-              <div className="flex items-center gap-1 text-emerald-700 mb-1">
-                <ShoppingBag size={12} />
-                <span className="text-[10px] font-bold uppercase">
-                  Pendapatan
-                </span>
-              </div>
-              <p className="text-sm font-bold text-emerald-900">
-                Rp {summary.omset.toLocaleString("id-ID")}
-              </p>
-              <p className="text-[10px] text-emerald-600 mt-0.5">
-                {summary.porsi} porsi
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-rose-50 border-rose-100 shadow-sm">
-            <CardContent>
-              <div className="flex items-center gap-1 text-rose-700 mb-1">
-                <TrendingDown size={12} />
-                <span className="text-[10px] font-bold uppercase">
-                  Belanja Bahan
-                </span>
-              </div>
-              <p className="text-sm font-bold text-rose-900">
-                Rp {summary.belanja.toLocaleString("id-ID")}
-              </p>
-              {summary.tarik > 0 && (
-                <p className="text-[10px] text-rose-600 mt-0.5">
-                  Tarik laba Rp {summary.tarik.toLocaleString("id-ID")}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Ringkasan Baris 2 */}
-        <div className="grid grid-cols-2 gap-2">
-          <Card className="bg-amber-50 border-amber-100 shadow-sm">
-            <CardContent>
-              <div className="flex items-center gap-1 text-amber-700 mb-1">
-                <TrendingUp size={12} />
-                <span className="text-[10px] font-bold uppercase">
-                  Estimasi Laba
-                </span>
-              </div>
-              <p className="text-sm font-bold text-amber-900">
-                Rp {summary.laba.toLocaleString("id-ID")}
-              </p>
-              <p className="text-[10px] text-amber-600 mt-0.5">
-                Pendapatan − HPP
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className={`shadow-sm ${summary.labaReal >= 0 ? "bg-blue-50 border-blue-100" : "bg-rose-50 border-rose-100"}`}
+      {/* Ringkasan periode */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          {
+            label: "Pendapatan",
+            nilai: summary.omset,
+            ket: `${summary.porsi.toLocaleString("id-ID")} porsi`,
+          },
+          {
+            label: "Belanja bahan",
+            nilai: summary.belanja,
+            ket: summary.tarik > 0 ? `Tarik laba ${rupiah(summary.tarik)}` : "",
+          },
+          {
+            label: "Estimasi laba",
+            nilai: summary.laba,
+            ket: "Pendapatan − HPP",
+          },
+          {
+            label: "Laba bersih",
+            nilai: summary.labaReal,
+            ket: "Pendapatan − belanja bahan",
+          },
+        ].map((k) => (
+          <div
+            key={k.label}
+            className="rounded-xl bg-white ring-1 ring-zinc-900/10 p-4"
           >
-            <CardContent>
-              <div
-                className={`flex items-center gap-1 mb-1 ${summary.labaReal >= 0 ? "text-blue-700" : "text-rose-700"}`}
-              >
-                <TrendingUp size={12} />
-                <span className="text-[10px] font-bold uppercase">
-                  Laba Bersih Real
-                </span>
-              </div>
-              <p
-                className={`text-sm font-bold ${summary.labaReal >= 0 ? "text-blue-900" : "text-rose-900"}`}
-              >
-                Rp {summary.labaReal.toLocaleString("id-ID")}
-              </p>
-              <p
-                className={`text-[10px] mt-0.5 ${summary.labaReal >= 0 ? "text-blue-600" : "text-rose-600"}`}
-              >
-                Pendapatan − Belanja Bahan
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+            <p className="text-xs font-medium text-zinc-500">{k.label}</p>
+            <p className="mt-1 text-lg font-semibold text-zinc-900 truncate">
+              {rupiah(k.nilai)}
+            </p>
+            {k.ket && <p className="mt-0.5 text-xs text-zinc-500">{k.ket}</p>}
+          </div>
+        ))}
       </div>
 
       {/* List transaksi */}
