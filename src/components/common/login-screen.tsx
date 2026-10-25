@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FirebaseError } from "firebase/app";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,11 +12,7 @@ import {
 import toast from "react-hot-toast";
 import { auth } from "@/firebase";
 
-interface Props {
-  emailDitolak?: string | null; // Diisi kalau sudah login tapi email tidak terdaftar di rules
-}
-
-export default function LoginScreen({ emailDitolak }: Props) {
+export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   const masuk = async () => {
@@ -41,30 +37,16 @@ export default function LoginScreen({ emailDitolak }: Props) {
       <Card className="w-full max-w-sm shadow-md animate-in fade-in slide-in-from-bottom-4 duration-300">
         <CardHeader>
           <CardTitle className="text-xl">Tahu Kocek DL</CardTitle>
-          <CardDescription>
-            {emailDitolak
-              ? `Akun ${emailDitolak} belum punya akses. Minta pemilik menambahkan email ini.`
-              : "Masuk untuk mencatat penjualan."}
-          </CardDescription>
+          <CardDescription>Masuk untuk mencatat penjualan.</CardDescription>
         </CardHeader>
         <CardContent>
-          {emailDitolak ? (
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => signOut(auth)}
-            >
-              Keluar & ganti akun
-            </Button>
-          ) : (
-            <Button
-              onClick={masuk}
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              {loading ? "Membuka Google..." : "Masuk dengan Google"}
-            </Button>
-          )}
+          <Button
+            onClick={masuk}
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            {loading ? "Membuka Google..." : "Masuk dengan Google"}
+          </Button>
         </CardContent>
       </Card>
     </div>

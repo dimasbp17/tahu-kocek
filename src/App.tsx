@@ -6,11 +6,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { onAuthStateChanged, type User } from "firebase/auth";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import {
   FileText,
   Home,
+  LogOut,
   Minus,
   Plus,
   Settings as SettingsIcon,
@@ -39,7 +40,8 @@ import type { Settings, Transaction } from "./interface/types";
 function Layout() {
   // undefined = status login belum diketahui, null = belum login
   const [user, setUser] = useState<User | null | undefined>(undefined);
-  const [aksesDitolak, setAksesDitolak] = useState(false);
+  // false sampai data pertama berhasil diambil, supaya Beranda tidak sempat tampil kosong
+  const [dataSiap, setDataSiap] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem("tahuKocekSettings");
@@ -62,7 +64,9 @@ function Layout() {
     () =>
       onAuthStateChanged(auth, (u) => {
         setUser(u);
-        setAksesDitolak(false);
+        // Kosongkan data akun sebelumnya saat ganti akun
+        setTransactions([]);
+        setDataSiap(false);
       }),
     [],
   );
@@ -78,11 +82,19 @@ function Layout() {
           ...(doc.data() as Omit<Transaction, "id">),
         }));
         setTransactions(data);
+        setDataSiap(true);
       },
       (err) => {
-        // Email tidak terdaftar di Firestore rules
-        if (err.code === "permission-denied") setAksesDitolak(true);
-        else toast.error("Gagal memuat data: " + err.message);
+        // Email tidak terdaftar di Firestore rules: keluarkan lagi ke layar login
+        if (err.code === "permission-denied") {
+          toast.error(`Akun ${user.email} tidak memiliki akses`, {
+            id: "akses-ditolak",
+          });
+          signOut(auth);
+        } else {
+          toast.error("Gagal memuat data: " + err.message);
+          setDataSiap(true);
+        }
       },
     );
     return () => unsubscribe();
@@ -94,7 +106,7 @@ function Layout() {
     { to: "/pengaturan", icon: SettingsIcon, label: "Setelan" },
   ];
 
-  if (user === undefined) {
+  if (user === undefined || (user && !dataSiap)) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-zinc-500 font-sans">
         Memuat...
@@ -102,7 +114,6 @@ function Layout() {
     );
   }
   if (!user) return <LoginScreen />;
-  if (aksesDitolak) return <LoginScreen emailDitolak={user.email} />;
 
   return (
     <div className="font-sans md:flex md:min-h-screen md:bg-slate-100">
@@ -130,11 +141,44 @@ function Layout() {
             </NavLink>
           ))}
         </nav>
+        <div className="border-t p-4 flex items-center gap-3">
+          <Avatar user={user} />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-zinc-800 truncate">
+              {user.displayName ?? "Pengguna"}
+            </p>
+            <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => signOut(auth)}
+            title="Keluar"
+            aria-label="Keluar"
+            className="shrink-0 text-zinc-500 hover:text-rose-600 hover:bg-rose-50"
+          >
+            <LogOut size={18} />
+          </Button>
+        </div>
       </aside>
 
       <div className="max-w-md mx-auto rounded-xl bg-slate-100 min-h-screen pb-24 font-sans md:max-w-none md:mx-0 md:flex-1 md:min-w-0 md:rounded-none md:pb-0">
-        <header className="bg-blue-600 text-white p-5 shadow-sm sticky top-0 z-10 md:hidden">
+        <header className="bg-blue-600 text-white p-5 shadow-sm sticky top-0 z-10 flex items-center justify-between gap-3 md:hidden">
           <h1 className="text-xl font-bold tracking-tight">Tahu Kocek DL</h1>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-sm font-medium truncate">
+              {user.displayName?.split(" ")[0] ?? user.email}
+            </span>
+            <Avatar user={user} />
+            <button
+              onClick={() => signOut(auth)}
+              title="Keluar"
+              aria-label="Keluar"
+              className="shrink-0 p-1.5 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <LogOut size={20} />
+            </button>
+          </div>
         </header>
 
         <main className="p-4 space-y-6 md:p-8 md:max-w-5xl md:mx-auto md:w-full">
@@ -165,6 +209,29 @@ function Layout() {
         </nav>
       </div>
     </div>
+  );
+}
+
+// Foto profil Google, atau huruf awal nama kalau tidak ada foto
+function Avatar({ user }: { user: User }) {
+  const [gagal, setGagal] = useState(false);
+  const inisial = (user.displayName ?? user.email ?? "?")[0].toUpperCase();
+
+  if (!user.photoURL || gagal) {
+    return (
+      <div className="h-8 w-8 shrink-0 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-sm font-bold">
+        {inisial}
+      </div>
+    );
+  }
+  return (
+    <img
+      src={user.photoURL}
+      alt=""
+      referrerPolicy="no-referrer"
+      onError={() => setGagal(true)}
+      className="h-8 w-8 shrink-0 rounded-full object-cover"
+    />
   );
 }
 

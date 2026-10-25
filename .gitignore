@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Berisi daftar email yang boleh akses
+firestore.rules
