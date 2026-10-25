@@ -22,6 +22,7 @@ import {
   Outlet,
   NavLink,
   useLocation,
+  Navigate,
   useNavigate,
 } from "react-router-dom";
 import { auth, db, keluar, tulisOffline } from "./firebase";
@@ -44,7 +45,7 @@ const DEFAULT_SETTINGS: Settings = {
 
 // Judul halaman di top bar desktop
 const JUDUL_HALAMAN: Record<string, string> = {
-  "/": "Ringkasan",
+  "/ringkasan": "Ringkasan",
   "/laporan": "Laporan",
   "/pengaturan": "Setelan",
   "/kasir": "Catat Penjualan",
@@ -146,7 +147,7 @@ function Layout() {
     );
 
   const navItems = [
-    { to: "/", icon: LayoutDashboard, label: "Ringkasan" },
+    { to: "/ringkasan", icon: LayoutDashboard, label: "Ringkasan" },
     { to: "/laporan", icon: FileText, label: "Laporan" },
     { to: "/pengaturan", icon: SettingsIcon, label: "Setelan" },
   ];
@@ -160,7 +161,10 @@ function Layout() {
       </div>
     );
   }
-  if (!user) return <LoginScreen />;
+  // Layar login selalu di "/"; setelah login, "/" diarahkan ke /ringkasan
+  if (!user) {
+    return pathname === "/" ? <LoginScreen /> : <Navigate to="/" replace />;
+  }
 
   return (
     <div className="font-sans md:flex md:min-h-screen md:bg-zinc-50">
@@ -177,7 +181,6 @@ function Layout() {
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
@@ -281,7 +284,6 @@ function Layout() {
             <NavLink
               key={to}
               to={to}
-              end={to === "/"}
               className={({ isActive }) =>
                 `flex flex-col items-center p-2 transition-colors rounded-lg ${
                   isActive ? "text-blue-700" : "text-zinc-400 hover:bg-zinc-50"
@@ -355,7 +357,7 @@ function KasirPage() {
   const navigate = useNavigate();
   return (
     <div className="md:max-w-xl">
-      <KasirTab settings={settings} onSuccess={() => navigate("/")} />
+      <KasirTab settings={settings} onSuccess={() => navigate("/ringkasan")} />
     </div>
   );
 }
@@ -385,7 +387,7 @@ function PengeluaranPage() {
   const navigate = useNavigate();
   return (
     <div className="md:max-w-xl">
-      <PengeluaranTab onSuccess={() => navigate("/")} />
+      <PengeluaranTab onSuccess={() => navigate("/ringkasan")} />
     </div>
   );
 }
@@ -396,11 +398,14 @@ const router = createBrowserRouter([
     path: "/",
     element: <Layout />,
     children: [
-      { index: true, element: <Dashboard /> },
+      // Alamat lama "/" dan alamat yang tidak dikenal diarahkan ke Ringkasan
+      { index: true, element: <Navigate to="/ringkasan" replace /> },
+      { path: "ringkasan", element: <Dashboard /> },
       { path: "kasir", element: <KasirPage /> },
       { path: "laporan", element: <LaporanPage /> },
       { path: "pengaturan", element: <PengaturanPage /> },
       { path: "pengeluaran", element: <PengeluaranPage /> },
+      { path: "*", element: <Navigate to="/ringkasan" replace /> },
     ],
   },
 ]);

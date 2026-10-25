@@ -18,7 +18,7 @@ export default defineConfig({
         short_name: "Tahu Kocek",
         description: "Catat penjualan dan keuangan Tahu Kocek",
         lang: "id",
-        start_url: "/",
+        start_url: "/ringkasan",
         display: "standalone",
         theme_color: "#ffffff",
         background_color: "#fafafa",
