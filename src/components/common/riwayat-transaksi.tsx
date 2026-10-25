@@ -2,6 +2,7 @@ import { ArrowDownLeft, ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Transaction } from "@/interface/types";
 import { rupiah } from "@/lib/format";
+import { teksLevel } from "@/lib/level";
 
 export type TampilanRiwayat = "tabel" | "kartu";
 
@@ -144,6 +145,11 @@ export default function RiwayatTransaksi({
                     >
                       {j.label}
                     </span>
+                    {t.levels && (
+                      <span className="text-zinc-600 tabular-nums">
+                        {teksLevel(t.levels)}
+                      </span>
+                    )}
                     {masuk && t.netProfit !== undefined && (
                       <span className="text-zinc-500">
                         Est. laba{" "}
@@ -166,13 +172,14 @@ export default function RiwayatTransaksi({
   return (
     <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-900/10">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[860px] text-sm">
           <thead className="bg-zinc-50 text-xs text-zinc-500">
             <tr>
               <th className="px-4 py-2.5 text-left font-medium">Waktu</th>
               <th className="px-4 py-2.5 text-left font-medium">Keterangan</th>
               <th className="px-4 py-2.5 text-left font-medium">Jenis</th>
               <th className="px-4 py-2.5 text-right font-medium">Porsi</th>
+              <th className="px-4 py-2.5 text-left font-medium">Level</th>
               <th className="px-4 py-2.5 text-right font-medium">Nominal</th>
               <th className="px-4 py-2.5 text-right font-medium">Est. laba</th>
               <th className="px-4 py-2.5 text-left font-medium">Pencatat</th>
@@ -204,6 +211,9 @@ export default function RiwayatTransaksi({
                   </td>
                   <td className="px-4 py-2.5 text-right text-zinc-600 tabular-nums">
                     {t.qty ?? "–"}
+                  </td>
+                  <td className="px-4 py-2.5 whitespace-nowrap text-zinc-600 tabular-nums">
+                    {teksLevel(t.levels) || "–"}
                   </td>
                   <td className="px-4 py-2.5 text-right">
                     <Nominal t={t} />

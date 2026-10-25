@@ -12,8 +12,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import type { Settings, Transaction } from "@/interface/types";
+import type { PorsiPerLevel, Settings, Transaction } from "@/interface/types";
 import { dataPencatat, db, tulisOffline } from "@/firebase";
+import { bersihkanLevel, totalPorsi } from "@/lib/level";
+import InputLevel from "./input-level";
 import {
   cekVoucher,
   deskripsiPesanan,
@@ -40,7 +42,7 @@ export default function EditTransaksiDialog({
   const [sumber, setSumber] = useState<SumberPesanan>(
     transaksi.source === "shopee" ? "shopee" : "luring",
   );
-  const [qty, setQty] = useState(String(transaksi.qty ?? 1));
+  const [levels, setLevels] = useState<PorsiPerLevel>(transaksi.levels ?? {});
   const [voucher, setVoucher] = useState(
     transaksi.discount ? String(transaksi.discount) : "",
   );
@@ -56,11 +58,11 @@ export default function EditTransaksiDialog({
       : transaksi.desc,
   );
 
-  const qtyAngka = Number(qty);
+  const qtyAngka = totalPorsi(levels);
   const rincian = hitungPesanan(
     settings,
     sumber,
-    Number.isInteger(qtyAngka) && qtyAngka > 0 ? qtyAngka : 0,
+    qtyAngka,
     voucher ? Number(voucher) : 0,
   );
 
@@ -74,8 +76,8 @@ export default function EditTransaksiDialog({
 
     let perubahan: Record<string, unknown>;
     if (penjualan) {
-      if (!Number.isInteger(qtyAngka) || qtyAngka <= 0) {
-        toast.error("Jumlah porsi harus angka bulat lebih dari 0");
+      if (qtyAngka === 0) {
+        toast.error("Isi jumlah porsi di salah satu level dulu");
         return;
       }
       const errorVoucher = cekVoucher(rincian.diskon, rincian.hargaJual);
@@ -86,10 +88,11 @@ export default function EditTransaksiDialog({
       perubahan = {
         source: sumber,
         qty: qtyAngka,
+        levels: bersihkanLevel(levels),
         amount: rincian.diterima,
         discount: rincian.diskon,
         netProfit: rincian.laba,
-        desc: deskripsiPesanan(sumber, qtyAngka, rincian.diskon),
+        desc: deskripsiPesanan(sumber, qtyAngka, rincian.diskon, levels),
       };
     } else {
       const jumlah = Number(nominal);
@@ -128,7 +131,7 @@ export default function EditTransaksiDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             Edit {penjualan ? "Penjualan" : "Pengeluaran"}
@@ -171,13 +174,14 @@ export default function EditTransaksiDialog({
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Jumlah Porsi</Label>
-              <Input
-                type="number"
-                min={1}
-                value={qty}
-                onChange={(e) => setQty(e.target.value)}
-              />
+              <Label>Jumlah Porsi per Level</Label>
+              {!transaksi.levels && (
+                <p className="text-xs text-amber-800 bg-amber-50 rounded-lg p-2">
+                  Transaksi ini dicatat sebelum ada level ({transaksi.qty ?? 0}{" "}
+                  porsi). Isi jumlah per level untuk menyimpan perubahan.
+                </p>
+              )}
+              <InputLevel levels={levels} onChange={setLevels} />
             </div>
             {sumber === "shopee" && (
               <div className="space-y-2">

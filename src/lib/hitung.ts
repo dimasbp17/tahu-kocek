@@ -1,4 +1,5 @@
-import type { Settings } from "@/interface/types";
+import type { PorsiPerLevel, Settings } from "@/interface/types";
+import { teksLevel } from "@/lib/level";
 
 export type SumberPesanan = "luring" | "shopee";
 
@@ -27,8 +28,10 @@ export function deskripsiPesanan(
   sumber: SumberPesanan,
   qty: number,
   diskon: number,
+  levels?: PorsiPerLevel,
 ) {
-  return `Pesanan ${sumber === "luring" ? "Luring" : "Shopee"} (${qty} porsi)${diskon > 0 ? ` - Diskon Rp${diskon.toLocaleString("id-ID")}` : ""}`;
+  const rincianLevel = teksLevel(levels);
+  return `Pesanan ${sumber === "luring" ? "Luring" : "Shopee"} (${qty} porsi${rincianLevel ? `: ${rincianLevel}` : ""})${diskon > 0 ? ` - Diskon Rp${diskon.toLocaleString("id-ID")}` : ""}`;
 }
 
 // Pesan error kalau potongan voucher tidak valid, atau null kalau aman

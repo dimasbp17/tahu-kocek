@@ -1,5 +1,6 @@
 import type { Transaction } from "@/interface/types";
 import type { Ringkasan } from "@/lib/ringkasan";
+import { LEVEL, teksLevel } from "@/lib/level";
 
 // Library Excel membaca Date sebagai UTC, jadi digeser supaya jam di Excel sama dengan jam lokal (WIB)
 function jamLokal(iso: string) {
@@ -32,6 +33,7 @@ export async function eksporExcel(
       "Sumber",
       "Keterangan",
       "Porsi",
+      "Level",
       "Voucher",
       "Nominal",
       "Estimasi Laba",
@@ -51,6 +53,7 @@ export async function eksporExcel(
         : "",
       t.desc,
       t.qty ?? null,
+      teksLevel(t.levels),
       t.discount ? rupiah(t.discount) : null,
       rupiah(t.amount),
       t.netProfit !== undefined ? rupiah(t.netProfit) : null,
@@ -66,6 +69,11 @@ export async function eksporExcel(
     [judul("Estimasi Laba"), rupiah(ringkasan.laba)],
     [judul("Tarik Laba"), rupiah(ringkasan.tarik)],
     [judul("Porsi Terjual"), ringkasan.porsi],
+    ...LEVEL.map((l) => [
+      judul(`Porsi Level ${l}`),
+      ringkasan.porsiPerLevel[l],
+    ]),
+    [judul("Porsi Tanpa Level"), ringkasan.porsiTanpaLevel],
     [judul("Jumlah Transaksi"), transaksi.length],
     [
       judul("Diekspor"),
@@ -88,6 +96,7 @@ export async function eksporExcel(
         { width: 12 },
         { width: 40 },
         { width: 7 },
+        { width: 16 },
         { width: 10 },
         { width: 12 },
         { width: 14 },

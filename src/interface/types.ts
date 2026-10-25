@@ -1,9 +1,15 @@
+// Jumlah porsi per level pedas, misal { "2": 2, "5": 1 }
+export type PorsiPerLevel = Partial<
+  Record<"1" | "2" | "3" | "4" | "5", number>
+>;
+
 export interface Transaction {
   category: string;
   id: string;
   type: "IN" | "OUT";
   source?: string;
   qty?: number;
+  levels?: PorsiPerLevel; // Transaksi sebelum ada level tidak punya ini
   amount: number;
   discount?: number;
   netProfit?: number; // Tambahan: Keuntungan bersih per penjualan

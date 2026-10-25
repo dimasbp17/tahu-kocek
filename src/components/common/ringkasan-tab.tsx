@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Minus, Plus } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Minus,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ColumnChart from "@/components/charts/column-chart";
 import KomposisiBar from "@/components/charts/komposisi-bar";
+import LevelTerlaris from "@/components/charts/level-terlaris";
 import StatTile, { Perubahan } from "./stat-tile";
 import type { Transaction } from "@/interface/types";
 import { angkaRingkas, rupiah } from "@/lib/format";
@@ -252,68 +258,83 @@ export default function RingkasanTab({
         </section>
       </div>
 
-      {/* Transaksi terbaru */}
-      <section className="rounded-xl bg-white ring-1 ring-zinc-900/10">
-        <div className="flex items-center justify-between px-5 pt-5 pb-2">
+      <div className="grid gap-3 md:gap-4 lg:grid-cols-3">
+        <section className="rounded-xl bg-white ring-1 ring-zinc-900/10 p-5">
           <h3 className="text-sm font-semibold text-zinc-900">
-            Transaksi terbaru
+            Level terlaris
           </h3>
-          <button
-            onClick={onLihatSemua}
-            className="text-xs font-medium text-blue-600 hover:text-blue-700"
-          >
-            Lihat semua
-          </button>
-        </div>
-        {terbaru.length === 0 ? (
-          <p className="px-5 pb-5 pt-2 text-sm text-zinc-500">
-            Belum ada transaksi.
+          <p className="text-xs text-zinc-500 mb-4">
+            Porsi terjual per level, {info.label.toLowerCase()}
           </p>
-        ) : (
-          <ul className="divide-y">
-            {terbaru.map((t) => {
-              const masuk = t.type === "IN";
-              return (
-                <li key={t.id} className="flex items-center gap-3 px-5 py-3">
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
-                      masuk
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-zinc-100 text-zinc-600"
-                    }`}
-                  >
-                    {masuk ? (
-                      <ArrowDownLeft size={16} />
-                    ) : (
-                      <ArrowUpRight size={16} />
-                    )}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm text-zinc-900 truncate">{t.desc}</p>
-                    <p className="text-xs text-zinc-500">
-                      {new Date(t.date).toLocaleString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                      {t.createdBy && ` · ${t.createdBy.split(" ")[0]}`}
+          <LevelTerlaris
+            porsiPerLevel={r.porsiPerLevel}
+            porsiTanpaLevel={r.porsiTanpaLevel}
+          />
+        </section>
+
+        {/* Transaksi terbaru */}
+        <section className="rounded-xl bg-white ring-1 ring-zinc-900/10 lg:col-span-2">
+          <div className="flex items-center justify-between px-5 pt-5 pb-2">
+            <h3 className="text-sm font-semibold text-zinc-900">
+              Transaksi terbaru
+            </h3>
+            <button
+              onClick={onLihatSemua}
+              className="text-xs font-medium text-blue-600 hover:text-blue-700"
+            >
+              Lihat semua
+            </button>
+          </div>
+          {terbaru.length === 0 ? (
+            <p className="px-5 pb-5 pt-2 text-sm text-zinc-500">
+              Belum ada transaksi.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {terbaru.map((t) => {
+                const masuk = t.type === "IN";
+                return (
+                  <li key={t.id} className="flex items-center gap-3 px-5 py-3">
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
+                        masuk
+                          ? "bg-emerald-50 text-emerald-700"
+                          : "bg-zinc-100 text-zinc-600"
+                      }`}
+                    >
+                      {masuk ? (
+                        <ArrowDownLeft size={16} />
+                      ) : (
+                        <ArrowUpRight size={16} />
+                      )}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-zinc-900 truncate">{t.desc}</p>
+                      <p className="text-xs text-zinc-500">
+                        {new Date(t.date).toLocaleString("id-ID", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                        {t.createdBy && ` · ${t.createdBy.split(" ")[0]}`}
+                      </p>
+                    </div>
+                    <p
+                      className={`text-sm font-semibold tabular-nums whitespace-nowrap ${
+                        masuk ? "text-emerald-700" : "text-zinc-900"
+                      }`}
+                    >
+                      {masuk ? "+" : "−"}
+                      {rupiah(t.amount)}
                     </p>
-                  </div>
-                  <p
-                    className={`text-sm font-semibold tabular-nums whitespace-nowrap ${
-                      masuk ? "text-emerald-700" : "text-zinc-900"
-                    }`}
-                  >
-                    {masuk ? "+" : "−"}
-                    {rupiah(t.amount)}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </section>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

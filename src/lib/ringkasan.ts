@@ -1,4 +1,5 @@
 import type { Transaction } from "@/interface/types";
+import { LEVEL } from "@/lib/level";
 
 export interface Ringkasan {
   omset: number; // Pendapatan (sudah dipotong komisi & voucher)
@@ -12,6 +13,8 @@ export interface Ringkasan {
   omsetShopee: number;
   porsiLuring: number;
   porsiShopee: number;
+  porsiPerLevel: Record<(typeof LEVEL)[number], number>;
+  porsiTanpaLevel: number; // Penjualan yang dicatat sebelum ada level
 }
 
 // Satu sumber rumus untuk Ringkasan, Laporan, dan ekspor Excel.
@@ -29,6 +32,8 @@ export function hitungRingkasan(transaksi: Transaction[]): Ringkasan {
     omsetShopee: 0,
     porsiLuring: 0,
     porsiShopee: 0,
+    porsiPerLevel: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 },
+    porsiTanpaLevel: 0,
   };
   for (const t of transaksi) {
     if (t.type === "IN") {
@@ -42,6 +47,11 @@ export function hitungRingkasan(transaksi: Transaction[]): Ringkasan {
       } else {
         r.omsetLuring += t.amount;
         r.porsiLuring += qty;
+      }
+      if (t.levels) {
+        for (const l of LEVEL) r.porsiPerLevel[l] += t.levels[l] ?? 0;
+      } else {
+        r.porsiTanpaLevel += qty;
       }
     } else if (t.category === "tarik") {
       r.tarik += t.amount;

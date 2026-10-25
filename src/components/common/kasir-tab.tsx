@@ -2,13 +2,14 @@ import { useState } from "react";
 import { addDoc, collection } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Minus, Plus } from "lucide-react";
 import toast from "react-hot-toast";
-import type { Settings } from "@/interface/types";
+import type { PorsiPerLevel, Settings } from "@/interface/types";
 import { dataPencatat, db, tulisOffline } from "@/firebase";
 import { rupiah } from "@/lib/format";
 import InputAngka from "./input-angka";
 import PilihanSegmen from "./pilihan-segmen";
+import InputLevel from "./input-level";
+import { bersihkanLevel, totalPorsi } from "@/lib/level";
 import {
   cekVoucher,
   deskripsiPesanan,
@@ -22,7 +23,7 @@ interface Props {
 }
 
 export default function KasirTab({ settings, onSuccess }: Props) {
-  const [qty, setQty] = useState(1);
+  const [levels, setLevels] = useState<PorsiPerLevel>({});
   const [tipePesanan, setTipePesanan] = useState<SumberPesanan>("luring");
   const [potonganVoucher, setPotonganVoucher] = useState("");
   const [saving, setSaving] = useState(false);
@@ -30,6 +31,10 @@ export default function KasirTab({ settings, onSuccess }: Props) {
   const simpanPesanan = () => {
     // Cegah transaksi dobel saat tombol ditekan berkali-kali
     if (saving) return;
+    if (qty === 0) {
+      toast.error("Isi jumlah porsi di salah satu level dulu");
+      return;
+    }
     const errorVoucher = cekVoucher(diskonPratinjau, hargaJual);
     if (errorVoucher) {
       toast.error(errorVoucher);
@@ -42,16 +47,17 @@ export default function KasirTab({ settings, onSuccess }: Props) {
           type: "IN",
           source: tipePesanan,
           qty: qty,
+          levels: bersihkanLevel(levels),
           amount: totalHarga,
           discount: diskonPratinjau,
           netProfit: labaBersihPratinjau, // Simpan untung bersih ke Firebase
           date: new Date().toISOString(),
           ...dataPencatat(),
-          desc: deskripsiPesanan(tipePesanan, qty, diskonPratinjau),
+          desc: deskripsiPesanan(tipePesanan, qty, diskonPratinjau, levels),
         }),
         "Gagal menyimpan pesanan",
       );
-      setQty(1);
+      setLevels({});
       setPotonganVoucher("");
       toast.success(
         online
@@ -64,6 +70,8 @@ export default function KasirTab({ settings, onSuccess }: Props) {
       setSaving(false);
     }
   };
+
+  const qty = totalPorsi(levels);
 
   const {
     hargaJual,
@@ -106,31 +114,9 @@ export default function KasirTab({ settings, onSuccess }: Props) {
 
         <div className="space-y-2 p-5">
           <Label className="text-xs font-medium text-zinc-600">
-            Jumlah porsi
+            Jumlah porsi per level
           </Label>
-          <div className="flex items-center justify-between gap-3 rounded-lg ring-1 ring-zinc-900/10 p-1.5">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setQty(Math.max(1, qty - 1))}
-              aria-label="Kurangi porsi"
-              className="h-11 w-11 text-zinc-600"
-            >
-              <Minus />
-            </Button>
-            <span className="text-3xl font-semibold text-zinc-900 tabular-nums">
-              {qty}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setQty(qty + 1)}
-              aria-label="Tambah porsi"
-              className="h-11 w-11 text-zinc-600"
-            >
-              <Plus />
-            </Button>
-          </div>
+          <InputLevel levels={levels} onChange={setLevels} />
         </div>
 
         {tipePesanan === "shopee" && (
@@ -189,7 +175,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
         <div className="flex justify-end px-5 py-3">
           <Button
             onClick={simpanPesanan}
-            disabled={saving}
+            disabled={saving || qty === 0}
             className="w-full md:w-auto bg-blue-600 hover:bg-blue-700"
           >
             {saving ? "Menyimpan..." : "Simpan Penjualan"}
