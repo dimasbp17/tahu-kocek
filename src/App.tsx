@@ -487,8 +487,8 @@ function KasirPage() {
 }
 
 function LaporanPage() {
-  const { transactions } = useOutletContext<LayoutContext>();
-  return <LaporanTab transactions={transactions} />;
+  const { transactions, settings } = useOutletContext<LayoutContext>();
+  return <LaporanTab transactions={transactions} settings={settings} />;
 }
 
 function PengaturanPage() {

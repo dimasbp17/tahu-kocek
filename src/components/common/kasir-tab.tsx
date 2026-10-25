@@ -14,6 +14,12 @@ import { Minus, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Settings } from "@/interface/types";
 import { dataPencatat, db, tulisOffline } from "@/firebase";
+import {
+  cekVoucher,
+  deskripsiPesanan,
+  hitungPesanan,
+  type SumberPesanan,
+} from "@/lib/hitung";
 
 interface Props {
   settings: Settings;
@@ -22,28 +28,16 @@ interface Props {
 
 export default function KasirTab({ settings, onSuccess }: Props) {
   const [qty, setQty] = useState(1);
-  const [tipePesanan, setTipePesanan] = useState("luring");
+  const [tipePesanan, setTipePesanan] = useState<SumberPesanan>("luring");
   const [potonganVoucher, setPotonganVoucher] = useState("");
   const [saving, setSaving] = useState(false);
-
-  // const hargaPratinjau =
-  //   tipePesanan === "luring" ? settings.hargaLuring : settings.hargaShopee;
-  // const diskonPratinjau =
-  //   tipePesanan === "shopee" && potonganVoucher ? parseInt(potonganVoucher) : 0;
-
-  // const totalHarga = Math.max(0, qty * hargaPratinjau - diskonPratinjau);
-  // const totalModalBaku = qty * (settings.hppPerPorsi || 0);
-  // const labaBersihPratinjau = totalHarga - totalModalBaku;
 
   const simpanPesanan = () => {
     // Cegah transaksi dobel saat tombol ditekan berkali-kali
     if (saving) return;
-    if (!Number.isInteger(diskonPratinjau) || diskonPratinjau < 0) {
-      toast.error("Potongan voucher harus angka bulat, tidak boleh minus");
-      return;
-    }
-    if (diskonPratinjau > qty * hargaPratinjau) {
-      toast.error("Potongan voucher melebihi harga jual");
+    const errorVoucher = cekVoucher(diskonPratinjau, hargaJual);
+    if (errorVoucher) {
+      toast.error(errorVoucher);
       return;
     }
     setSaving(true);
@@ -58,7 +52,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
           netProfit: labaBersihPratinjau, // Simpan untung bersih ke Firebase
           date: new Date().toISOString(),
           ...dataPencatat(),
-          desc: `Pesanan ${tipePesanan === "luring" ? "Luring" : "Shopee"} (${qty} porsi)${diskonPratinjau > 0 ? ` - Diskon Rp${diskonPratinjau.toLocaleString("id-ID")}` : ""}`,
+          desc: deskripsiPesanan(tipePesanan, qty, diskonPratinjau),
         }),
         "Gagal menyimpan pesanan",
       );
@@ -76,23 +70,18 @@ export default function KasirTab({ settings, onSuccess }: Props) {
     }
   };
 
-  const hargaPratinjau =
-    tipePesanan === "luring" ? settings.hargaLuring : settings.hargaShopee;
-
-  const komisiShopee =
-    tipePesanan === "shopee"
-      ? Math.round(hargaPratinjau * qty * (settings.komisiShopee / 100))
-      : 0;
-
-  const diskonPratinjau =
-    tipePesanan === "shopee" && potonganVoucher ? Number(potonganVoucher) : 0;
-
-  const totalHarga = Math.max(
-    0,
-    qty * hargaPratinjau - diskonPratinjau - komisiShopee,
+  const {
+    hargaJual,
+    komisi: komisiShopee,
+    diskon: diskonPratinjau,
+    diterima: totalHarga,
+    laba: labaBersihPratinjau,
+  } = hitungPesanan(
+    settings,
+    tipePesanan,
+    qty,
+    potonganVoucher ? Number(potonganVoucher) : 0,
   );
-  const totalModalBaku = qty * (settings.hppPerPorsi || 0);
-  const labaBersihPratinjau = totalHarga - totalModalBaku;
 
   return (
     <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300 shadow-md">
@@ -176,7 +165,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
         <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 space-y-1">
           <p className="text-sm text-emerald-800 flex justify-between">
             <span>Harga Jual</span>
-            <strong>Rp {(qty * hargaPratinjau).toLocaleString("id-ID")}</strong>
+            <strong>Rp {hargaJual.toLocaleString("id-ID")}</strong>
           </p>
           {komisiShopee > 0 && (
             <p className="text-sm text-rose-600 flex justify-between">

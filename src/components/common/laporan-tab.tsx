@@ -12,13 +12,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Trash2, ShoppingBag, TrendingUp, TrendingDown } from "lucide-react";
+import {
+  Download,
+  Pencil,
+  Trash2,
+  ShoppingBag,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import toast from "react-hot-toast";
-import type { Transaction } from "@/interface/types";
+import type { Settings, Transaction } from "@/interface/types";
 import { db, tulisOffline } from "@/firebase";
+import { eksporExcel } from "@/lib/ekspor-excel";
+import EditTransaksiDialog from "./edit-transaksi-dialog";
 
 interface Props {
   transactions: Transaction[];
+  settings: Settings;
 }
 
 type FilterPeriod = "hari" | "minggu" | "bulan" | "semua";
@@ -40,9 +50,14 @@ function getStartDate(period: FilterPeriod): Date | null {
   return null;
 }
 
-export default function LaporanTab({ transactions }: Props) {
+export default function LaporanTab({ transactions, settings }: Props) {
   const [period, setPeriod] = useState<FilterPeriod>("hari");
   const [hapusId, setHapusId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [mengekspor, setMengekspor] = useState(false);
+
+  // Dicari dari data terbaru supaya dialog tertutup kalau transaksinya dihapus perangkat lain
+  const transaksiEdit = transactions.find((t) => t.id === editId);
 
   const filtered = useMemo(() => {
     const start = getStartDate(period);
@@ -78,6 +93,25 @@ export default function LaporanTab({ transactions }: Props) {
     setHapusId(null);
   };
 
+  const ekspor = async () => {
+    if (filtered.length === 0) {
+      toast.error("Tidak ada transaksi untuk diekspor");
+      return;
+    }
+    setMengekspor(true);
+    try {
+      await eksporExcel(
+        filtered,
+        summary,
+        periods.find((p) => p.id === period)!,
+      );
+    } catch (e) {
+      toast.error("Gagal mengekspor: " + e);
+    } finally {
+      setMengekspor(false);
+    }
+  };
+
   const periods: { id: FilterPeriod; label: string }[] = [
     { id: "hari", label: "Hari Ini" },
     { id: "minggu", label: "7 Hari" },
@@ -110,6 +144,15 @@ export default function LaporanTab({ transactions }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {transaksiEdit && (
+        <EditTransaksiDialog
+          key={transaksiEdit.id}
+          transaksi={transaksiEdit}
+          settings={settings}
+          onClose={() => setEditId(null)}
+        />
+      )}
 
       {/* Filter */}
       <div className="flex gap-2 md:max-w-md">
@@ -216,13 +259,23 @@ export default function LaporanTab({ transactions }: Props) {
 
       {/* List transaksi */}
       <div className="border-none bg-transparent shadow-none">
-        <CardHeader className="mb-3">
+        <CardHeader className="mb-3 flex items-center justify-between gap-3">
           <CardTitle className="text-base">
             Riwayat{" "}
             <span className="text-zinc-400 font-normal text-sm">
               ({filtered.length} transaksi)
             </span>
           </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={ekspor}
+            disabled={mengekspor}
+            className="shrink-0"
+          >
+            <Download size={14} />
+            {mengekspor ? "Menyiapkan..." : "Excel"}
+          </Button>
         </CardHeader>
         <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {filtered.length === 0 ? (
@@ -247,10 +300,11 @@ export default function LaporanTab({ transactions }: Props) {
                       month: "short",
                     })}
                     {t.createdBy && ` · oleh ${t.createdBy.split(" ")[0]}`}
+                    {t.editedBy && " · diedit"}
                   </p>
                   {t.type === "IN" && t.netProfit !== undefined && (
                     <p className="text-xs font-semibold text-emerald-600 mt-1 bg-emerald-50 inline-block px-2 py-1 rounded">
-                      Untung Bersih: Rp {t.netProfit.toLocaleString("id-ID")}
+                      Estimasi Laba: Rp {t.netProfit.toLocaleString("id-ID")}
                     </p>
                   )}
                 </div>
@@ -261,14 +315,28 @@ export default function LaporanTab({ transactions }: Props) {
                     {t.type === "IN" ? "+" : "-"} Rp{" "}
                     {t.amount.toLocaleString("id-ID")}
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setHapusId(t.id)}
-                    className="h-8 w-8 text-rose-500 hover:bg-rose-100 shrink-0"
-                  >
-                    <Trash2 size={16} />
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditId(t.id)}
+                      title="Edit"
+                      aria-label="Edit transaksi"
+                      className="h-8 w-8 text-zinc-500 hover:bg-zinc-100 shrink-0"
+                    >
+                      <Pencil size={16} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setHapusId(t.id)}
+                      title="Hapus"
+                      aria-label="Hapus transaksi"
+                      className="h-8 w-8 text-rose-500 hover:bg-rose-100 shrink-0"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  </div>
                 </div>
               </div>
             ))

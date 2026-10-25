@@ -11,6 +11,9 @@ export interface Transaction {
   desc: string;
   createdBy?: string; // Nama akun pencatat (transaksi lama tidak punya)
   createdByEmail?: string;
+  editedBy?: string; // Nama akun yang terakhir mengedit
+  editedByEmail?: string;
+  editedAt?: string;
 }
 
 export interface Settings {
