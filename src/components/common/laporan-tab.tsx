@@ -113,7 +113,7 @@ export default function LaporanTab({ transactions }: Props) {
       </AlertDialog>
 
       {/* Filter */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 md:max-w-md">
         {periods.map((p) => (
           <button
             key={p.id}
@@ -129,81 +129,83 @@ export default function LaporanTab({ transactions }: Props) {
         ))}
       </div>
 
-      {/* Ringkasan Baris 1 */}
-      <div className="grid grid-cols-2 gap-2">
-        <Card className="bg-emerald-50 border-emerald-100 shadow-sm">
-          <CardContent>
-            <div className="flex items-center gap-1 text-emerald-700 mb-1">
-              <ShoppingBag size={12} />
-              <span className="text-[10px] font-bold uppercase">
-                Omset Kotor
-              </span>
-            </div>
-            <p className="text-sm font-bold text-emerald-900">
-              Rp {summary.omset.toLocaleString("id-ID")}
-            </p>
-            <p className="text-[10px] text-emerald-600 mt-0.5">
-              {summary.porsi} porsi
-            </p>
-          </CardContent>
-        </Card>
+      <div className="space-y-4 lg:grid lg:grid-cols-2 lg:gap-2 lg:space-y-0">
+        {/* Ringkasan Baris 1 */}
+        <div className="grid grid-cols-2 gap-2">
+          <Card className="bg-emerald-50 border-emerald-100 shadow-sm">
+            <CardContent>
+              <div className="flex items-center gap-1 text-emerald-700 mb-1">
+                <ShoppingBag size={12} />
+                <span className="text-[10px] font-bold uppercase">
+                  Omset Kotor
+                </span>
+              </div>
+              <p className="text-sm font-bold text-emerald-900">
+                Rp {summary.omset.toLocaleString("id-ID")}
+              </p>
+              <p className="text-[10px] text-emerald-600 mt-0.5">
+                {summary.porsi} porsi
+              </p>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-rose-50 border-rose-100 shadow-sm">
-          <CardContent>
-            <div className="flex items-center gap-1 text-rose-700 mb-1">
-              <TrendingDown size={12} />
-              <span className="text-[10px] font-bold uppercase">
-                Total Keluar
-              </span>
-            </div>
-            <p className="text-sm font-bold text-rose-900">
-              Rp {summary.pengeluaran.toLocaleString("id-ID")}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+          <Card className="bg-rose-50 border-rose-100 shadow-sm">
+            <CardContent>
+              <div className="flex items-center gap-1 text-rose-700 mb-1">
+                <TrendingDown size={12} />
+                <span className="text-[10px] font-bold uppercase">
+                  Total Keluar
+                </span>
+              </div>
+              <p className="text-sm font-bold text-rose-900">
+                Rp {summary.pengeluaran.toLocaleString("id-ID")}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Ringkasan Baris 2 */}
-      <div className="grid grid-cols-2 gap-2">
-        <Card className="bg-amber-50 border-amber-100 shadow-sm">
-          <CardContent>
-            <div className="flex items-center gap-1 text-amber-700 mb-1">
-              <TrendingUp size={12} />
-              <span className="text-[10px] font-bold uppercase">
-                Laba per Porsi
-              </span>
-            </div>
-            <p className="text-sm font-bold text-amber-900">
-              Rp {summary.laba.toLocaleString("id-ID")}
-            </p>
-            <p className="text-[10px] text-amber-600 mt-0.5">Setelah HPP</p>
-          </CardContent>
-        </Card>
+        {/* Ringkasan Baris 2 */}
+        <div className="grid grid-cols-2 gap-2">
+          <Card className="bg-amber-50 border-amber-100 shadow-sm">
+            <CardContent>
+              <div className="flex items-center gap-1 text-amber-700 mb-1">
+                <TrendingUp size={12} />
+                <span className="text-[10px] font-bold uppercase">
+                  Laba per Porsi
+                </span>
+              </div>
+              <p className="text-sm font-bold text-amber-900">
+                Rp {summary.laba.toLocaleString("id-ID")}
+              </p>
+              <p className="text-[10px] text-amber-600 mt-0.5">Setelah HPP</p>
+            </CardContent>
+          </Card>
 
-        <Card
-          className={`shadow-sm ${summary.labaReal >= 0 ? "bg-blue-50 border-blue-100" : "bg-rose-50 border-rose-100"}`}
-        >
-          <CardContent>
-            <div
-              className={`flex items-center gap-1 mb-1 ${summary.labaReal >= 0 ? "text-blue-700" : "text-rose-700"}`}
-            >
-              <TrendingUp size={12} />
-              <span className="text-[10px] font-bold uppercase">
-                Laba Bersih Real
-              </span>
-            </div>
-            <p
-              className={`text-sm font-bold ${summary.labaReal >= 0 ? "text-blue-900" : "text-rose-900"}`}
-            >
-              Rp {summary.labaReal.toLocaleString("id-ID")}
-            </p>
-            <p
-              className={`text-[10px] mt-0.5 ${summary.labaReal >= 0 ? "text-blue-600" : "text-rose-600"}`}
-            >
-              Omset - Semua Keluar
-            </p>
-          </CardContent>
-        </Card>
+          <Card
+            className={`shadow-sm ${summary.labaReal >= 0 ? "bg-blue-50 border-blue-100" : "bg-rose-50 border-rose-100"}`}
+          >
+            <CardContent>
+              <div
+                className={`flex items-center gap-1 mb-1 ${summary.labaReal >= 0 ? "text-blue-700" : "text-rose-700"}`}
+              >
+                <TrendingUp size={12} />
+                <span className="text-[10px] font-bold uppercase">
+                  Laba Bersih Real
+                </span>
+              </div>
+              <p
+                className={`text-sm font-bold ${summary.labaReal >= 0 ? "text-blue-900" : "text-rose-900"}`}
+              >
+                Rp {summary.labaReal.toLocaleString("id-ID")}
+              </p>
+              <p
+                className={`text-[10px] mt-0.5 ${summary.labaReal >= 0 ? "text-blue-600" : "text-rose-600"}`}
+              >
+                Omset - Semua Keluar
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* List transaksi */}
@@ -216,9 +218,9 @@ export default function LaporanTab({ transactions }: Props) {
             </span>
           </CardTitle>
         </CardHeader>
-        <div className="space-y-3">
+        <div className="space-y-3 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {filtered.length === 0 ? (
-            <p className="text-zinc-500 text-center p-8 bg-white rounded-lg border border-dashed">
+            <p className="text-zinc-500 text-center p-8 bg-white rounded-lg border border-dashed lg:col-span-2">
               Belum ada transaksi.
             </p>
           ) : (

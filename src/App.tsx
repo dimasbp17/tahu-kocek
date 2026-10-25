@@ -72,39 +72,67 @@ function Layout() {
   ];
 
   return (
-    <div className="max-w-md mx-auto rounded-xl bg-slate-100 min-h-screen pb-24 font-sans">
-      <header className="bg-blue-600 text-white p-5 shadow-sm sticky top-0 z-10">
-        <h1 className="text-xl font-bold tracking-tight">Tahu Kocek DL</h1>
-      </header>
+    <div className="font-sans md:flex md:min-h-screen md:bg-slate-100">
+      {/* Sidebar khusus desktop */}
+      <aside className="hidden md:flex flex-col w-60 shrink-0 sticky top-0 h-screen bg-white border-r">
+        <div className="bg-blue-600 text-white p-5">
+          <h1 className="text-xl font-bold tracking-tight">Tahu Kocek DL</h1>
+        </div>
+        <nav className="flex-1 p-3 space-y-1">
+          {navItems.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+                  isActive
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-zinc-500 hover:bg-zinc-50"
+                }`
+              }
+            >
+              <Icon size={20} />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
+      </aside>
 
-      <Toaster position="top-center" />
+      <div className="max-w-md mx-auto rounded-xl bg-slate-100 min-h-screen pb-24 font-sans md:max-w-none md:mx-0 md:flex-1 md:min-w-0 md:rounded-none md:pb-0">
+        <header className="bg-blue-600 text-white p-5 shadow-sm sticky top-0 z-10 md:hidden">
+          <h1 className="text-xl font-bold tracking-tight">Tahu Kocek DL</h1>
+        </header>
 
-      <main className="p-4 space-y-6">
-        {/* Outlet menerima props lewat context */}
-        <Outlet context={{ transactions, settings, setSettings }} />
-      </main>
+        <Toaster position="top-center" />
 
-      <nav className="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around p-2 pb-safe shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-50">
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            end={to === "/"}
-            className={({ isActive }) =>
-              `flex flex-col items-center p-2 transition-colors rounded-lg ${
-                isActive ? "text-blue-600" : "text-zinc-400 hover:bg-zinc-50"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <Icon size={24} className={isActive ? "fill-blue-50" : ""} />
-                <span className="text-[10px] font-bold mt-1">{label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
+        <main className="p-4 space-y-6 md:p-8 md:max-w-5xl md:mx-auto md:w-full">
+          {/* Outlet menerima props lewat context */}
+          <Outlet context={{ transactions, settings, setSettings }} />
+        </main>
+
+        <nav className="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around p-2 pb-safe shadow-[0_-4px_15px_-3px_rgba(0,0,0,0.05)] z-50 md:hidden">
+          {navItems.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              className={({ isActive }) =>
+                `flex flex-col items-center p-2 transition-colors rounded-lg ${
+                  isActive ? "text-blue-600" : "text-zinc-400 hover:bg-zinc-50"
+                }`
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={24} className={isActive ? "fill-blue-50" : ""} />
+                  <span className="text-[10px] font-bold mt-1">{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
+      </div>
     </div>
   );
 }
@@ -151,8 +179,8 @@ function Dashboard() {
     .reduce((sum, t) => sum + (t.netProfit || 0), 0);
 
   return (
-    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <Card className="border-blue-100 shadow-md">
+    <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
+      <Card className="border-blue-100 shadow-md lg:col-span-2">
         <CardHeader className="pb-2">
           <CardDescription>Uang di Tangan Hari Ini</CardDescription>
           <CardTitle className="text-4xl text-zinc-900 font-semibold">
@@ -161,7 +189,7 @@ function Dashboard() {
         </CardHeader>
       </Card>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:col-span-2 lg:gap-4">
         <Card className="bg-emerald-50 border-emerald-100 shadow-sm">
           <CardContent>
             <div className="flex items-center gap-2 text-emerald-700 mb-2">
@@ -194,7 +222,7 @@ function Dashboard() {
       </div>
 
       <Card
-        className={`col-span-2 shadow-sm ${labaReal >= 0 ? "bg-white" : "bg-rose-50 border-rose-100"}`}
+        className={`col-span-2 shadow-sm lg:col-span-1 lg:col-start-3 lg:row-start-2 ${labaReal >= 0 ? "bg-white" : "bg-rose-50 border-rose-100"}`}
       >
         <CardContent className="space-y-3">
           <div
@@ -255,7 +283,7 @@ function Dashboard() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-2 gap-4 pt-2">
+      <div className="grid grid-cols-2 gap-4 pt-2 lg:col-start-3 lg:row-start-1 lg:grid-cols-1 lg:content-center lg:gap-3 lg:pt-0">
         <Button
           onClick={() => navigate("/kasir")}
           size="lg"
@@ -279,7 +307,11 @@ function Dashboard() {
 function KasirPage() {
   const { settings } = useOutletContext<LayoutContext>();
   const navigate = useNavigate();
-  return <KasirTab settings={settings} onSuccess={() => navigate("/")} />;
+  return (
+    <div className="md:max-w-xl md:mx-auto">
+      <KasirTab settings={settings} onSuccess={() => navigate("/")} />
+    </div>
+  );
 }
 
 function LaporanPage() {
@@ -289,12 +321,20 @@ function LaporanPage() {
 
 function PengaturanPage() {
   const { settings, setSettings } = useOutletContext<LayoutContext>();
-  return <PengaturanTab settings={settings} setSettings={setSettings} />;
+  return (
+    <div className="md:max-w-xl md:mx-auto">
+      <PengaturanTab settings={settings} setSettings={setSettings} />
+    </div>
+  );
 }
 
 function PengeluaranPage() {
   const navigate = useNavigate();
-  return <PengeluaranTab onSuccess={() => navigate("/")} />;
+  return (
+    <div className="md:max-w-xl md:mx-auto">
+      <PengeluaranTab onSuccess={() => navigate("/")} />
+    </div>
+  );
 }
 
 // ─── Router ──────────────────────────────────────────────────────────────────
