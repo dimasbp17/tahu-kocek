@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { onAuthStateChanged, type User } from "firebase/auth";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import {
   FileText,
@@ -17,7 +18,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import {
   createBrowserRouter,
   RouterProvider,
@@ -25,8 +26,9 @@ import {
   NavLink,
   useNavigate,
 } from "react-router-dom";
-import { db } from "./firebase";
+import { auth, db } from "./firebase";
 import KasirTab from "./components/common/kasir-tab";
+import LoginScreen from "./components/common/login-screen";
 import LaporanTab from "./components/common/laporan-tab";
 import PengaturanTab from "./components/common/pengaturan-tab";
 import PengeluaranTab from "./components/common/pengeluaran-tab";
@@ -35,6 +37,9 @@ import type { Settings, Transaction } from "./interface/types";
 // ─── Context / shared state ──────────────────────────────────────────────────
 // Settings & transactions di-lift ke layout supaya semua route bisa akses
 function Layout() {
+  // undefined = status login belum diketahui, null = belum login
+  const [user, setUser] = useState<User | null | undefined>(undefined);
+  const [aksesDitolak, setAksesDitolak] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem("tahuKocekSettings");
@@ -53,23 +58,51 @@ function Layout() {
     localStorage.setItem("tahuKocekSettings", JSON.stringify(settings));
   }, [settings]);
 
+  useEffect(
+    () =>
+      onAuthStateChanged(auth, (u) => {
+        setUser(u);
+        setAksesDitolak(false);
+      }),
+    [],
+  );
+
   useEffect(() => {
+    if (!user) return;
     const q = query(collection(db, "transaksi"), orderBy("date", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...(doc.data() as Omit<Transaction, "id">),
-      }));
-      setTransactions(data);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Transaction, "id">),
+        }));
+        setTransactions(data);
+      },
+      (err) => {
+        // Email tidak terdaftar di Firestore rules
+        if (err.code === "permission-denied") setAksesDitolak(true);
+        else toast.error("Gagal memuat data: " + err.message);
+      },
+    );
     return () => unsubscribe();
-  }, []);
+  }, [user]);
 
   const navItems = [
     { to: "/", icon: Home, label: "Beranda" },
     { to: "/laporan", icon: FileText, label: "Laporan" },
     { to: "/pengaturan", icon: SettingsIcon, label: "Setelan" },
   ];
+
+  if (user === undefined) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-zinc-500 font-sans">
+        Memuat...
+      </div>
+    );
+  }
+  if (!user) return <LoginScreen />;
+  if (aksesDitolak) return <LoginScreen emailDitolak={user.email} />;
 
   return (
     <div className="font-sans md:flex md:min-h-screen md:bg-slate-100">
@@ -103,8 +136,6 @@ function Layout() {
         <header className="bg-blue-600 text-white p-5 shadow-sm sticky top-0 z-10 md:hidden">
           <h1 className="text-xl font-bold tracking-tight">Tahu Kocek DL</h1>
         </header>
-
-        <Toaster position="top-center" />
 
         <main className="p-4 space-y-6 md:p-8 md:max-w-5xl md:mx-auto md:w-full">
           {/* Outlet menerima props lewat context */}
@@ -359,5 +390,10 @@ const router = createBrowserRouter([
 ]);
 
 export default function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <Toaster position="top-center" />
+      <RouterProvider router={router} />
+    </>
+  );
 }
