@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import { dataPencatat, db } from "@/firebase";
+import { dataPencatat, db, tulisOffline } from "@/firebase";
 
 interface Props {
   onSuccess: () => void;
@@ -23,7 +23,7 @@ export default function PengeluaranTab({ onSuccess }: Props) {
   const [keterangan, setKeterangan] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const simpanPengeluaran = async () => {
+  const simpanPengeluaran = () => {
     // Cegah transaksi dobel saat tombol ditekan berkali-kali
     if (saving) return;
     if (!nominal || !keterangan) {
@@ -33,27 +33,31 @@ export default function PengeluaranTab({ onSuccess }: Props) {
 
     setSaving(true);
     try {
-      await addDoc(collection(db, "transaksi"), {
-        type: "OUT",
-        category: tipeKeluar, // Menandai apakah ini belanja modal atau tarik laba
-        amount: parseInt(nominal),
-        date: new Date().toISOString(),
-        ...dataPencatat(),
-        desc:
-          tipeKeluar === "tarik" ? `[Tarik Laba] ${keterangan}` : keterangan,
-      });
+      const online = tulisOffline(
+        addDoc(collection(db, "transaksi"), {
+          type: "OUT",
+          category: tipeKeluar, // Menandai apakah ini belanja modal atau tarik laba
+          amount: parseInt(nominal),
+          date: new Date().toISOString(),
+          ...dataPencatat(),
+          desc:
+            tipeKeluar === "tarik" ? `[Tarik Laba] ${keterangan}` : keterangan,
+        }),
+        "Gagal menyimpan pengeluaran",
+      );
 
       setNominal("");
       setKeterangan("");
       toast.success(
-        tipeKeluar === "tarik"
-          ? "Berhasil tarik laba!"
-          : "Modal belanja dicatat!",
+        !online
+          ? "Disimpan offline, dikirim saat online"
+          : tipeKeluar === "tarik"
+            ? "Berhasil tarik laba!"
+            : "Modal belanja dicatat!",
       );
       onSuccess();
     } catch (e) {
       toast.error("Gagal menyimpan: " + e);
-    } finally {
       setSaving(false);
     }
   };

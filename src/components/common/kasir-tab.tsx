@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Minus, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Settings } from "@/interface/types";
-import { dataPencatat, db } from "@/firebase";
+import { dataPencatat, db, tulisOffline } from "@/firebase";
 
 interface Props {
   settings: Settings;
@@ -35,29 +35,35 @@ export default function KasirTab({ settings, onSuccess }: Props) {
   // const totalModalBaku = qty * (settings.hppPerPorsi || 0);
   // const labaBersihPratinjau = totalHarga - totalModalBaku;
 
-  const simpanPesanan = async () => {
+  const simpanPesanan = () => {
     // Cegah transaksi dobel saat tombol ditekan berkali-kali
     if (saving) return;
     setSaving(true);
     try {
-      await addDoc(collection(db, "transaksi"), {
-        type: "IN",
-        source: tipePesanan,
-        qty: qty,
-        amount: totalHarga,
-        discount: diskonPratinjau,
-        netProfit: labaBersihPratinjau, // Simpan untung bersih ke Firebase
-        date: new Date().toISOString(),
-        ...dataPencatat(),
-        desc: `Pesanan ${tipePesanan === "luring" ? "Luring" : "Shopee"} (${qty} porsi)${diskonPratinjau > 0 ? ` - Diskon Rp${diskonPratinjau.toLocaleString("id-ID")}` : ""}`,
-      });
+      const online = tulisOffline(
+        addDoc(collection(db, "transaksi"), {
+          type: "IN",
+          source: tipePesanan,
+          qty: qty,
+          amount: totalHarga,
+          discount: diskonPratinjau,
+          netProfit: labaBersihPratinjau, // Simpan untung bersih ke Firebase
+          date: new Date().toISOString(),
+          ...dataPencatat(),
+          desc: `Pesanan ${tipePesanan === "luring" ? "Luring" : "Shopee"} (${qty} porsi)${diskonPratinjau > 0 ? ` - Diskon Rp${diskonPratinjau.toLocaleString("id-ID")}` : ""}`,
+        }),
+        "Gagal menyimpan pesanan",
+      );
       setQty(1);
       setPotonganVoucher("");
-      toast.success("Berhasil menyimpan pesanan");
+      toast.success(
+        online
+          ? "Berhasil menyimpan pesanan"
+          : "Pesanan disimpan offline, dikirim saat online",
+      );
       onSuccess();
     } catch (e) {
       toast.error("Gagal menyimpan: " + e);
-    } finally {
       setSaving(false);
     }
   };

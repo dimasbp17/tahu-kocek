@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Settings } from "@/interface/types";
 import { Button } from "@/components/ui/button";
-import { signOut } from "firebase/auth";
-import { auth } from "@/firebase";
+import { auth, keluar } from "@/firebase";
 
 interface Props {
   settings: Settings;
@@ -104,7 +103,7 @@ export default function PengaturanTab({ settings, setSettings }: Props) {
               {auth.currentUser?.email}
             </p>
           </div>
-          <Button variant="outline" onClick={() => signOut(auth)}>
+          <Button variant="outline" onClick={keluar}>
             Keluar
           </Button>
         </CardContent>

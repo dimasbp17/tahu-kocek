@@ -15,7 +15,7 @@ import {
 import { Trash2, ShoppingBag, TrendingUp, TrendingDown } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Transaction } from "@/interface/types";
-import { db } from "@/firebase";
+import { db, tulisOffline } from "@/firebase";
 
 interface Props {
   transactions: Transaction[];
@@ -71,16 +71,11 @@ export default function LaporanTab({ transactions }: Props) {
     return { omset, laba, belanja, tarik, porsi, labaReal };
   }, [filtered]);
 
-  const konfirmasiHapus = async () => {
+  const konfirmasiHapus = () => {
     if (!hapusId) return;
-    try {
-      await deleteDoc(doc(db, "transaksi", hapusId));
-      toast.success("Berhasil dihapus");
-    } catch {
-      toast.error("Gagal menghapus");
-    } finally {
-      setHapusId(null);
-    }
+    tulisOffline(deleteDoc(doc(db, "transaksi", hapusId)), "Gagal menghapus");
+    toast.success("Berhasil dihapus");
+    setHapusId(null);
   };
 
   const periods: { id: FilterPeriod; label: string }[] = [

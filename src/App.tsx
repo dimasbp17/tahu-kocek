@@ -27,7 +27,8 @@ import {
   NavLink,
   useNavigate,
 } from "react-router-dom";
-import { auth, db } from "./firebase";
+import { auth, db, keluar } from "./firebase";
+import { useOnline } from "./hooks/use-online";
 import KasirTab from "./components/common/kasir-tab";
 import LoginScreen from "./components/common/login-screen";
 import LaporanTab from "./components/common/laporan-tab";
@@ -42,6 +43,7 @@ function Layout() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   // false sampai data pertama berhasil diambil, supaya Beranda tidak sempat tampil kosong
   const [dataSiap, setDataSiap] = useState(false);
+  const online = useOnline();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem("tahuKocekSettings");
@@ -152,7 +154,7 @@ function Layout() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => signOut(auth)}
+            onClick={keluar}
             title="Keluar"
             aria-label="Keluar"
             className="shrink-0 text-zinc-500 hover:text-rose-600 hover:bg-rose-50"
@@ -171,7 +173,7 @@ function Layout() {
             </span>
             <Avatar user={user} />
             <button
-              onClick={() => signOut(auth)}
+              onClick={keluar}
               title="Keluar"
               aria-label="Keluar"
               className="shrink-0 p-1.5 rounded-lg hover:bg-blue-700 transition-colors"
@@ -180,6 +182,13 @@ function Layout() {
             </button>
           </div>
         </header>
+
+        {!online && (
+          <div className="bg-amber-100 text-amber-800 text-xs font-medium text-center px-4 py-2">
+            Sedang offline. Transaksi tetap tersimpan dan dikirim otomatis saat
+            online.
+          </div>
+        )}
 
         <main className="p-4 space-y-6 md:p-8 md:max-w-5xl md:mx-auto md:w-full">
           {/* Outlet menerima props lewat context */}
