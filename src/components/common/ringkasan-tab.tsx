@@ -2,6 +2,8 @@ import { useState } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  CircleAlert,
+  CircleCheck,
   Minus,
   Plus,
 } from "lucide-react";
@@ -153,6 +155,27 @@ export default function RingkasanTab({
           <p className="mt-1 text-xs text-zinc-500">
             Pendapatan − belanja bahan
           </p>
+          {/* Status balik modal, hanya kalau periode ini ada transaksi */}
+          {(r.omset > 0 || r.belanja > 0) && (
+            <p
+              className={`mt-3 inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                r.labaReal >= 0
+                  ? "bg-emerald-50 text-[#006300]"
+                  : "bg-rose-50 text-[#d03b3b]"
+              }`}
+            >
+              {r.labaReal >= 0 ? (
+                <>
+                  <CircleCheck size={14} /> Modal sudah balik
+                </>
+              ) : (
+                <>
+                  <CircleAlert size={14} /> Kurang {rupiah(-r.labaReal)} lagi
+                  balik modal
+                </>
+              )}
+            </p>
+          )}
 
           <dl className="mt-4 space-y-2 border-t pt-4 text-sm">
             <div className="flex justify-between gap-3">
