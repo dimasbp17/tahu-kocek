@@ -1,17 +1,82 @@
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Settings } from "@/interface/types";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
 import { auth, keluar } from "@/firebase";
+
+// Satu baris setelan: judul & penjelasan di kiri, isian di kanan (desktop)
+function Baris({
+  judul,
+  deskripsi,
+  children,
+}: {
+  judul: string;
+  deskripsi: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="grid gap-4 p-5 md:grid-cols-3 md:gap-8">
+      <div>
+        <h3 className="text-sm font-semibold text-zinc-900">{judul}</h3>
+        <p className="mt-0.5 text-xs text-zinc-500">{deskripsi}</p>
+      </div>
+      <div className="md:col-span-2">{children}</div>
+    </div>
+  );
+}
+
+// Isian angka dengan awalan (Rp) atau akhiran (%)
+function InputAngka({
+  id,
+  label,
+  value,
+  onChange,
+  awalan,
+  akhiran,
+  min,
+  max,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  awalan?: string;
+  akhiran?: string;
+  min?: number;
+  max?: number;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={id} className="text-xs font-medium text-zinc-600">
+        {label}
+      </Label>
+      <div className="relative">
+        {awalan && (
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
+            {awalan}
+          </span>
+        )}
+        <Input
+          id={id}
+          type="number"
+          inputMode="numeric"
+          min={min}
+          max={max}
+          value={value}
+          onChange={onChange}
+          className={`h-10 font-medium tabular-nums ${awalan ? "pl-10" : ""} ${akhiran ? "pr-8" : ""}`}
+        />
+        {akhiran && (
+          <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-zinc-500">
+            {akhiran}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
 
 interface Props {
   settings: Settings;
@@ -78,97 +143,110 @@ export default function PengaturanTab({
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="animate-in fade-in slide-in-from-bottom-4 duration-300 shadow-md">
-        <CardHeader>
-          <CardTitle>Pengaturan Harga & Modal</CardTitle>
-          <CardDescription>
-            Sesuaikan harga jual dan modal per porsi. Berlaku untuk semua
-            perangkat.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-3">
-            <Label>Harga Jual Langsung (Rp)</Label>
-            <Input
-              type="number"
+    <div className="space-y-4 md:space-y-6 animate-in fade-in duration-300">
+      <div>
+        <h2 className="text-xl font-semibold text-zinc-900 md:hidden">
+          Setelan
+        </h2>
+        <p className="text-sm text-zinc-500">
+          Harga, komisi, dan modal berlaku untuk semua perangkat.
+        </p>
+      </div>
+
+      {!setelanTersimpan && (
+        <p className="text-xs text-amber-800 bg-amber-50 ring-1 ring-amber-200 rounded-xl p-4">
+          Setelan ini masih tersimpan di perangkat ini saja. Cek angkanya, lalu
+          tekan Simpan supaya dipakai di semua perangkat.
+        </p>
+      )}
+
+      <section className="rounded-xl bg-white ring-1 ring-zinc-900/10 divide-y overflow-hidden">
+        <Baris
+          judul="Harga jual"
+          deskripsi="Harga per porsi yang dibayar pembeli."
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <InputAngka
+              id="hargaLuring"
+              label="Langsung"
+              awalan="Rp"
               min={1}
               value={form.hargaLuring}
               onChange={ubah("hargaLuring")}
-              className="h-12 font-semibold"
             />
-          </div>
-          <div className="space-y-3">
-            <Label>Harga Shopee Food (Rp)</Label>
-            <Input
-              type="number"
+            <InputAngka
+              id="hargaShopee"
+              label="Shopee Food"
+              awalan="Rp"
               min={1}
               value={form.hargaShopee}
               onChange={ubah("hargaShopee")}
-              className="h-12 font-semibold"
             />
           </div>
-          <div className="space-y-3 p-4 bg-orange-50 rounded-lg border border-orange-100">
-            <Label className="text-orange-800">Komisi Shopee Food (%)</Label>
-            <Input
-              type="number"
+        </Baris>
+
+        <Baris
+          judul="Komisi Shopee Food"
+          deskripsi="Potongan platform dari harga jual. Cek di akun merchant-mu."
+        >
+          <div className="sm:max-w-[calc(50%-0.5rem)]">
+            <InputAngka
+              id="komisiShopee"
+              label="Persentase komisi"
+              akhiran="%"
               min={0}
               max={100}
               value={form.komisiShopee}
               onChange={ubah("komisiShopee")}
-              className="h-12 font-semibold bg-white"
             />
-            <p className="text-xs text-orange-600 font-medium mt-2">
-              *Potongan platform Shopee Food dari harga jual. Cek di akun
-              merchant-mu.
-            </p>
           </div>
-          <div className="space-y-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
-            <Label className="text-blue-800">
-              Modal Baku per Porsi / HPP (Rp)
-            </Label>
-            <Input
-              type="number"
+        </Baris>
+
+        <Baris
+          judul="Modal per porsi (HPP)"
+          deskripsi="Dipakai untuk menghitung estimasi laba setiap penjualan."
+        >
+          <div className="sm:max-w-[calc(50%-0.5rem)]">
+            <InputAngka
+              id="hppPerPorsi"
+              label="HPP per porsi"
+              awalan="Rp"
               min={0}
               value={form.hppPerPorsi}
               onChange={ubah("hppPerPorsi")}
-              className="h-12 font-semibold bg-white"
             />
-            <p className="text-xs text-blue-600 font-medium mt-2">
-              *Digunakan untuk menghitung keuntungan bersih per penjualan.
-            </p>
           </div>
+        </Baris>
 
-          {!setelanTersimpan && (
-            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3">
-              Setelan ini masih tersimpan di perangkat ini saja. Cek angkanya,
-              lalu tekan Simpan supaya dipakai di semua perangkat.
-            </p>
+        <div className="flex items-center justify-end gap-3 bg-zinc-50 px-5 py-3">
+          {!berubah && (
+            <span className="text-xs text-zinc-500">Tidak ada perubahan</span>
           )}
-
           <Button
             onClick={simpan}
             disabled={!berubah}
-            className="w-full bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700"
           >
-            {berubah ? "Simpan Setelan" : "Tidak ada perubahan"}
+            Simpan Setelan
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
-      <Card className="shadow-sm">
-        <CardContent className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-xs text-zinc-500">Masuk sebagai</p>
-            <p className="text-sm font-semibold text-zinc-800 truncate">
+      <section className="rounded-xl bg-white ring-1 ring-zinc-900/10">
+        <Baris
+          judul="Akun"
+          deskripsi="Akun Google yang sedang dipakai di perangkat ini."
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-zinc-900 truncate">
               {auth.currentUser?.email}
             </p>
+            <Button variant="outline" onClick={keluar}>
+              Keluar
+            </Button>
           </div>
-          <Button variant="outline" onClick={keluar}>
-            Keluar
-          </Button>
-        </CardContent>
-      </Card>
+        </Baris>
+      </section>
     </div>
   );
 }

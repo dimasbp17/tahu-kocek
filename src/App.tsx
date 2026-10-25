@@ -21,6 +21,7 @@ import {
   RouterProvider,
   Outlet,
   NavLink,
+  useLocation,
   useNavigate,
 } from "react-router-dom";
 import { auth, db, keluar, tulisOffline } from "./firebase";
@@ -41,6 +42,15 @@ const DEFAULT_SETTINGS: Settings = {
   komisiShopee: 30,
 };
 
+// Judul halaman di top bar desktop
+const JUDUL_HALAMAN: Record<string, string> = {
+  "/": "Ringkasan",
+  "/laporan": "Laporan",
+  "/pengaturan": "Setelan",
+  "/kasir": "Catat Penjualan",
+  "/pengeluaran": "Catat Pengeluaran",
+};
+
 // ─── Context / shared state ──────────────────────────────────────────────────
 // Settings & transactions di-lift ke layout supaya semua route bisa akses
 function Layout() {
@@ -52,6 +62,7 @@ function Layout() {
   // false selama setelan bersama belum pernah disimpan ke Firestore
   const [setelanTersimpan, setSetelanTersimpan] = useState(true);
   const online = useOnline();
+  const { pathname } = useLocation();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   // Setelan lama di perangkat ini hanya dipakai sampai setelan bersama di Firestore pertama kali disimpan
   const [settings, setSettings] = useState<Settings>(() => {
@@ -140,6 +151,8 @@ function Layout() {
     { to: "/pengaturan", icon: SettingsIcon, label: "Setelan" },
   ];
 
+  const judulHalaman = JUDUL_HALAMAN[pathname] ?? "Tahu Kocek DL";
+
   if (user === undefined || (user && !(dataSiap && setelanSiap))) {
     return (
       <div className="min-h-screen bg-zinc-50 flex items-center justify-center text-sm text-zinc-500 font-sans">
@@ -178,25 +191,6 @@ function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="border-t p-4 flex items-center gap-3">
-          <Avatar user={user} />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-zinc-800 truncate">
-              {user.displayName ?? "Pengguna"}
-            </p>
-            <p className="text-xs text-zinc-500 truncate">{user.email}</p>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={keluar}
-            title="Keluar"
-            aria-label="Keluar"
-            className="shrink-0 text-zinc-500 hover:text-rose-600 hover:bg-rose-50"
-          >
-            <LogOut size={18} />
-          </Button>
-        </div>
       </aside>
 
       <div className="max-w-md mx-auto bg-zinc-50 min-h-screen pb-24 font-sans md:max-w-none md:mx-0 md:flex-1 md:min-w-0 md:pb-0">
@@ -220,6 +214,46 @@ function Layout() {
             >
               <LogOut size={20} />
             </button>
+          </div>
+        </header>
+
+        {/* Top bar khusus desktop */}
+        <header className="hidden md:flex sticky top-0 z-10 h-16 items-center justify-between gap-4 bg-white border-b px-8">
+          <h2 className="text-base font-semibold text-zinc-900">
+            {judulHalaman}
+          </h2>
+          <div className="flex items-center gap-4">
+            <span
+              className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
+                online
+                  ? "bg-emerald-50 text-emerald-700"
+                  : "bg-amber-50 text-amber-700"
+              }`}
+            >
+              <span
+                className={`h-1.5 w-1.5 rounded-full ${online ? "bg-emerald-600" : "bg-amber-500"}`}
+              />
+              {online ? "Online" : "Offline"}
+            </span>
+            <div className="flex items-center gap-3 border-l pl-4">
+              <Avatar user={user} />
+              <div className="min-w-0 max-w-48">
+                <p className="text-sm font-medium text-zinc-900 truncate">
+                  {user.displayName ?? "Pengguna"}
+                </p>
+                <p className="text-xs text-zinc-500 truncate">{user.email}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={keluar}
+                title="Keluar"
+                aria-label="Keluar"
+                className="shrink-0 text-zinc-500 hover:text-rose-600 hover:bg-rose-50"
+              >
+                <LogOut size={18} />
+              </Button>
+            </div>
           </div>
         </header>
 
@@ -335,7 +369,7 @@ function PengaturanPage() {
   const { settings, setelanTersimpan, simpanSettings } =
     useOutletContext<LayoutContext>();
   return (
-    <div className="md:max-w-xl md:mx-auto">
+    <div className="md:max-w-3xl">
       {/* key: form ikut diperbarui saat setelan berubah dari perangkat lain */}
       <PengaturanTab
         key={JSON.stringify(settings)}

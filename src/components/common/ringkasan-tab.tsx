@@ -90,7 +90,9 @@ export default function RingkasanTab({
       {/* Judul & aksi cepat */}
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <h2 className="text-xl font-semibold text-zinc-900">Ringkasan</h2>
+          <h2 className="text-xl font-semibold text-zinc-900 md:hidden">
+            Ringkasan
+          </h2>
           <p className="text-sm text-zinc-500">
             {now.toLocaleDateString("id-ID", {
               weekday: "long",

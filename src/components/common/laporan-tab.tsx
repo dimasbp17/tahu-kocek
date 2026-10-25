@@ -131,7 +131,9 @@ export default function LaporanTab({ transactions, settings }: Props) {
       )}
 
       <div>
-        <h2 className="text-xl font-semibold text-zinc-900">Laporan</h2>
+        <h2 className="text-xl font-semibold text-zinc-900 md:hidden">
+          Laporan
+        </h2>
         <p className="text-sm text-zinc-500">
           Ringkasan dan riwayat semua transaksi
         </p>
