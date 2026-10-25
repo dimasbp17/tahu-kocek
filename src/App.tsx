@@ -12,6 +12,7 @@ import {
   FileText,
   LayoutDashboard,
   LogOut,
+  Wallet,
   Settings as SettingsIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -33,6 +34,7 @@ import LaporanTab from "./components/common/laporan-tab";
 import PengaturanTab from "./components/common/pengaturan-tab";
 import PengeluaranTab from "./components/common/pengeluaran-tab";
 import RingkasanTab from "./components/common/ringkasan-tab";
+import TutupKasTab from "./components/common/tutup-kas-tab";
 import type { Settings, Transaction } from "./interface/types";
 
 const DEFAULT_SETTINGS: Settings = {
@@ -47,6 +49,7 @@ const DEFAULT_SETTINGS: Settings = {
 const JUDUL_HALAMAN: Record<string, string> = {
   "/ringkasan": "Ringkasan",
   "/laporan": "Laporan",
+  "/tutup-kas": "Tutup Kas",
   "/pengaturan": "Setelan",
   "/kasir": "Catat Penjualan",
   "/pengeluaran": "Catat Pengeluaran",
@@ -149,6 +152,7 @@ function Layout() {
   const navItems = [
     { to: "/ringkasan", icon: LayoutDashboard, label: "Ringkasan" },
     { to: "/laporan", icon: FileText, label: "Laporan" },
+    { to: "/tutup-kas", icon: Wallet, label: "Tutup Kas" },
     { to: "/pengaturan", icon: SettingsIcon, label: "Setelan" },
   ];
 
@@ -367,6 +371,11 @@ function LaporanPage() {
   return <LaporanTab transactions={transactions} settings={settings} />;
 }
 
+function TutupKasPage() {
+  const { transactions } = useOutletContext<LayoutContext>();
+  return <TutupKasTab transactions={transactions} />;
+}
+
 function PengaturanPage() {
   const { settings, setelanTersimpan, simpanSettings } =
     useOutletContext<LayoutContext>();
@@ -403,6 +412,7 @@ const router = createBrowserRouter([
       { path: "ringkasan", element: <Dashboard /> },
       { path: "kasir", element: <KasirPage /> },
       { path: "laporan", element: <LaporanPage /> },
+      { path: "tutup-kas", element: <TutupKasPage /> },
       { path: "pengaturan", element: <PengaturanPage /> },
       { path: "pengeluaran", element: <PengeluaranPage /> },
       { path: "*", element: <Navigate to="/ringkasan" replace /> },

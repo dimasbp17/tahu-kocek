@@ -12,10 +12,17 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import type { PorsiPerLevel, Settings, Transaction } from "@/interface/types";
+import type {
+  MetodeBayar,
+  PorsiPerLevel,
+  Settings,
+  Transaction,
+} from "@/interface/types";
 import { dataPencatat, db, tulisOffline } from "@/firebase";
 import { bersihkanLevel, totalPorsi } from "@/lib/level";
 import InputLevel from "./input-level";
+import PilihanSegmen from "./pilihan-segmen";
+import { metodeBayar } from "@/lib/kas";
 import {
   cekVoucher,
   deskripsiPesanan,
@@ -43,6 +50,7 @@ export default function EditTransaksiDialog({
     transaksi.source === "shopee" ? "shopee" : "luring",
   );
   const [levels, setLevels] = useState<PorsiPerLevel>(transaksi.levels ?? {});
+  const [bayar, setBayar] = useState<MetodeBayar>(metodeBayar(transaksi));
   const [voucher, setVoucher] = useState(
     transaksi.discount ? String(transaksi.discount) : "",
   );
@@ -89,6 +97,7 @@ export default function EditTransaksiDialog({
         source: sumber,
         qty: qtyAngka,
         levels: bersihkanLevel(levels),
+        ...(sumber === "luring" ? { payment: bayar } : {}),
         amount: rincian.diterima,
         discount: rincian.diskon,
         netProfit: rincian.laba,
@@ -106,6 +115,7 @@ export default function EditTransaksiDialog({
       }
       perubahan = {
         category: jenis,
+        payment: bayar,
         amount: jumlah,
         desc: jenis === "tarik" ? PREFIX_TARIK + keterangan : keterangan,
       };
@@ -173,6 +183,19 @@ export default function EditTransaksiDialog({
                 </Button>
               </div>
             </div>
+            {sumber === "luring" && (
+              <div className="space-y-2">
+                <Label>Metode Bayar</Label>
+                <PilihanSegmen
+                  pilihan={[
+                    { id: "tunai", label: "Tunai" },
+                    { id: "nontunai", label: "QRIS" },
+                  ]}
+                  nilai={bayar}
+                  onPilih={setBayar}
+                />
+              </div>
+            )}
             <div className="space-y-2">
               <Label>Jumlah Porsi per Level</Label>
               {!transaksi.levels && (
@@ -233,6 +256,17 @@ export default function EditTransaksiDialog({
                   Tarik Laba
                 </Button>
               </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Dibayar dengan</Label>
+              <PilihanSegmen
+                pilihan={[
+                  { id: "tunai", label: "Tunai dari laci" },
+                  { id: "nontunai", label: "Transfer/QRIS" },
+                ]}
+                nilai={bayar}
+                onPilih={setBayar}
+              />
             </div>
             <div className="space-y-2">
               <Label>Nominal (Rp)</Label>

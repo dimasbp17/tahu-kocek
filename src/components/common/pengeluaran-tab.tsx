@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { dataPencatat, db, tulisOffline } from "@/firebase";
 import InputAngka from "./input-angka";
 import PilihanSegmen from "./pilihan-segmen";
+import type { MetodeBayar } from "@/interface/types";
 
 interface Props {
   onSuccess: () => void;
@@ -16,6 +17,7 @@ export default function PengeluaranTab({ onSuccess }: Props) {
   const [tipeKeluar, setTipeKeluar] = useState<"belanja" | "tarik">("belanja");
   const [nominal, setNominal] = useState("");
   const [keterangan, setKeterangan] = useState("");
+  const [dana, setDana] = useState<MetodeBayar>("tunai");
   const [saving, setSaving] = useState(false);
 
   const simpanPengeluaran = () => {
@@ -37,6 +39,7 @@ export default function PengeluaranTab({ onSuccess }: Props) {
         addDoc(collection(db, "transaksi"), {
           type: "OUT",
           category: tipeKeluar, // Menandai apakah ini belanja modal atau tarik laba
+          payment: dana, // Tunai = uang diambil dari laci
           amount: jumlah,
           date: new Date().toISOString(),
           ...dataPencatat(),
@@ -86,6 +89,19 @@ export default function PengeluaranTab({ onSuccess }: Props) {
             nilai={tipeKeluar}
             onPilih={setTipeKeluar}
           />
+          <div className="space-y-2 pt-3">
+            <Label className="text-xs font-medium text-zinc-600">
+              Dibayar dengan
+            </Label>
+            <PilihanSegmen
+              pilihan={[
+                { id: "tunai", label: "Tunai dari laci" },
+                { id: "nontunai", label: "Transfer/QRIS" },
+              ]}
+              nilai={dana}
+              onPilih={setDana}
+            />
+          </div>
         </div>
 
         <div className="space-y-4 p-5">

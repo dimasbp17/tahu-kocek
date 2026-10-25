@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import type { Transaction } from "@/interface/types";
 import { rupiah } from "@/lib/format";
 import { teksLevel } from "@/lib/level";
+import { labelMetode } from "@/lib/kas";
 
 export type TampilanRiwayat = "tabel" | "kartu";
 
@@ -17,16 +18,18 @@ const PREFIX_TARIK = "[Tarik Laba] ";
 
 // Jenis transaksi selalu ditulis sebagai teks; warna hanya penegas
 function jenis(t: Transaction) {
+  const bayar = labelMetode(t);
+  const dan = (label: string) => (bayar ? `${label} · ${bayar}` : label);
   if (t.type === "IN") {
     return {
-      label: t.source === "shopee" ? "Shopee Food" : "Langsung",
+      label: t.source === "shopee" ? "Shopee Food" : dan("Langsung"),
       kelas: "bg-emerald-50 text-emerald-700",
     };
   }
   if (t.category === "tarik") {
-    return { label: "Tarik laba", kelas: "bg-amber-50 text-amber-800" };
+    return { label: dan("Tarik laba"), kelas: "bg-amber-50 text-amber-800" };
   }
-  return { label: "Belanja", kelas: "bg-zinc-100 text-zinc-700" };
+  return { label: dan("Belanja"), kelas: "bg-zinc-100 text-zinc-700" };
 }
 
 // Jenis sudah tampil di kolomnya sendiri, jadi awalan "[Tarik Laba]" tidak perlu diulang
@@ -172,7 +175,7 @@ export default function RiwayatTransaksi({
   return (
     <div className="overflow-hidden rounded-xl bg-white ring-1 ring-zinc-900/10">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[860px] text-sm">
+        <table className="w-full min-w-[920px] text-sm">
           <thead className="bg-zinc-50 text-xs text-zinc-500">
             <tr>
               <th className="px-4 py-2.5 text-left font-medium">Waktu</th>

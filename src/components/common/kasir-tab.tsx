@@ -3,7 +3,7 @@ import { addDoc, collection } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import toast from "react-hot-toast";
-import type { PorsiPerLevel, Settings } from "@/interface/types";
+import type { MetodeBayar, PorsiPerLevel, Settings } from "@/interface/types";
 import { dataPencatat, db, tulisOffline } from "@/firebase";
 import { rupiah } from "@/lib/format";
 import InputAngka from "./input-angka";
@@ -26,6 +26,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
   const [levels, setLevels] = useState<PorsiPerLevel>({});
   const [tipePesanan, setTipePesanan] = useState<SumberPesanan>("luring");
   const [potonganVoucher, setPotonganVoucher] = useState("");
+  const [bayar, setBayar] = useState<MetodeBayar>("tunai");
   const [saving, setSaving] = useState(false);
 
   const simpanPesanan = () => {
@@ -48,6 +49,8 @@ export default function KasirTab({ settings, onSuccess }: Props) {
           source: tipePesanan,
           qty: qty,
           levels: bersihkanLevel(levels),
+          // Shopee selalu lewat aplikasi, jadi metode bayar hanya untuk Langsung
+          ...(tipePesanan === "luring" ? { payment: bayar } : {}),
           amount: totalHarga,
           discount: diskonPratinjau,
           netProfit: labaBersihPratinjau, // Simpan untung bersih ke Firebase
@@ -110,6 +113,21 @@ export default function KasirTab({ settings, onSuccess }: Props) {
             nilai={tipePesanan}
             onPilih={setTipePesanan}
           />
+          {tipePesanan === "luring" && (
+            <div className="space-y-2 pt-3">
+              <Label className="text-xs font-medium text-zinc-600">
+                Metode bayar
+              </Label>
+              <PilihanSegmen
+                pilihan={[
+                  { id: "tunai", label: "Tunai" },
+                  { id: "nontunai", label: "QRIS" },
+                ]}
+                nilai={bayar}
+                onPilih={setBayar}
+              />
+            </div>
+          )}
         </div>
 
         <div className="space-y-2 p-5">

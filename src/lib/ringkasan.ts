@@ -1,5 +1,6 @@
 import type { Transaction } from "@/interface/types";
 import { LEVEL } from "@/lib/level";
+import { metodeBayar } from "@/lib/kas";
 
 export interface Ringkasan {
   omset: number; // Pendapatan (sudah dipotong komisi & voucher)
@@ -11,6 +12,8 @@ export interface Ringkasan {
   arusKas: number; // Pendapatan − belanja − tarik laba
   omsetLuring: number;
   omsetShopee: number;
+  omsetTunai: number; // Bagian dari omsetLuring
+  omsetQris: number; // Bagian dari omsetLuring
   porsiLuring: number;
   porsiShopee: number;
   porsiPerLevel: Record<(typeof LEVEL)[number], number>;
@@ -30,6 +33,8 @@ export function hitungRingkasan(transaksi: Transaction[]): Ringkasan {
     arusKas: 0,
     omsetLuring: 0,
     omsetShopee: 0,
+    omsetTunai: 0,
+    omsetQris: 0,
     porsiLuring: 0,
     porsiShopee: 0,
     porsiPerLevel: { "1": 0, "2": 0, "3": 0, "4": 0, "5": 0 },
@@ -46,6 +51,8 @@ export function hitungRingkasan(transaksi: Transaction[]): Ringkasan {
         r.porsiShopee += qty;
       } else {
         r.omsetLuring += t.amount;
+        if (metodeBayar(t) === "tunai") r.omsetTunai += t.amount;
+        else r.omsetQris += t.amount;
         r.porsiLuring += qty;
       }
       if (t.levels) {

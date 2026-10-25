@@ -267,7 +267,7 @@ export default function RingkasanTab({
                 nama: "Langsung",
                 warna: WARNA.langsung,
                 nilai: r.omsetLuring,
-                keterangan: `${r.porsiLuring.toLocaleString("id-ID")} porsi`,
+                keterangan: `${r.porsiLuring.toLocaleString("id-ID")} porsi · Tunai ${rupiah(r.omsetTunai)} · QRIS ${rupiah(r.omsetQris)}`,
               },
               {
                 nama: "Shopee Food",

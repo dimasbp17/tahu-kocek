@@ -1,6 +1,7 @@
 import type { Transaction } from "@/interface/types";
 import type { Ringkasan } from "@/lib/ringkasan";
 import { LEVEL, teksLevel } from "@/lib/level";
+import { labelMetode } from "@/lib/kas";
 
 // Library Excel membaca Date sebagai UTC, jadi digeser supaya jam di Excel sama dengan jam lokal (WIB)
 function jamLokal(iso: string) {
@@ -31,6 +32,7 @@ export async function eksporExcel(
       "Tanggal",
       "Jenis",
       "Sumber",
+      "Pembayaran",
       "Keterangan",
       "Porsi",
       "Level",
@@ -51,6 +53,7 @@ export async function eksporExcel(
           ? "Shopee Food"
           : "Langsung"
         : "",
+      labelMetode(t),
       t.desc,
       t.qty ?? null,
       teksLevel(t.levels),
@@ -94,6 +97,7 @@ export async function eksporExcel(
         { width: 17 },
         { width: 14 },
         { width: 12 },
+        { width: 14 },
         { width: 40 },
         { width: 7 },
         { width: 16 },
