@@ -24,6 +24,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
   const [qty, setQty] = useState(1);
   const [tipePesanan, setTipePesanan] = useState("luring");
   const [potonganVoucher, setPotonganVoucher] = useState("");
+  const [saving, setSaving] = useState(false);
 
   // const hargaPratinjau =
   //   tipePesanan === "luring" ? settings.hargaLuring : settings.hargaShopee;
@@ -35,6 +36,9 @@ export default function KasirTab({ settings, onSuccess }: Props) {
   // const labaBersihPratinjau = totalHarga - totalModalBaku;
 
   const simpanPesanan = async () => {
+    // Cegah transaksi dobel saat tombol ditekan berkali-kali
+    if (saving) return;
+    setSaving(true);
     try {
       await addDoc(collection(db, "transaksi"), {
         type: "IN",
@@ -52,6 +56,8 @@ export default function KasirTab({ settings, onSuccess }: Props) {
       onSuccess();
     } catch (e) {
       toast.error("Gagal menyimpan: " + e);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -60,7 +66,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
 
   const komisiShopee =
     tipePesanan === "shopee"
-      ? Math.round(hargaPratinjau * qty * ((settings.komisiShopee || 0) / 100))
+      ? Math.round(hargaPratinjau * qty * (settings.komisiShopee / 100))
       : 0;
 
   const diskonPratinjau =
@@ -182,9 +188,10 @@ export default function KasirTab({ settings, onSuccess }: Props) {
 
         <Button
           onClick={simpanPesanan}
+          disabled={saving}
           className="w-full bg-emerald-600 hover:bg-emerald-700 shadow-md"
         >
-          Simpan Transaksi
+          {saving ? "Menyimpan..." : "Simpan Transaksi"}
         </Button>
       </CardContent>
     </Card>

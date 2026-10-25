@@ -56,7 +56,7 @@ export default function PengaturanTab({ settings, setSettings }: Props) {
           <Label className="text-orange-800">Komisi Shopee Food (%)</Label>
           <Input
             type="number"
-            value={settings.komisiShopee ?? 30}
+            value={settings.komisiShopee}
             onChange={(e) =>
               setSettings({
                 ...settings,

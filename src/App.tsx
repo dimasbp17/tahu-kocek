@@ -38,15 +38,15 @@ function Layout() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [settings, setSettings] = useState<Settings>(() => {
     const saved = localStorage.getItem("tahuKocekSettings");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          hargaLuring: 10000,
-          hargaShopee: 12500,
-          hppPerPorsi: 6000,
-          tanggalSiklus: 25,
-          komisiShopee: 30,
-        };
+    const defaults: Settings = {
+      hargaLuring: 10000,
+      hargaShopee: 12500,
+      hppPerPorsi: 6000,
+      tanggalSiklus: 25,
+      komisiShopee: 30,
+    };
+    // Digabung dengan default supaya setelan lama yang belum punya field baru tetap lengkap
+    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
   });
 
   useEffect(() => {
@@ -150,9 +150,15 @@ function Dashboard() {
   const { transactions } = useOutletContext<LayoutContext>();
   const navigate = useNavigate();
 
-  const getTodayString = () => new Date().toISOString().split("T")[0];
-  const todayTransactions = transactions.filter((t) =>
-    t.date.startsWith(getTodayString()),
+  // Pakai jam lokal (WIB), bukan UTC, supaya hari baru mulai jam 00.00
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  );
+  const todayTransactions = transactions.filter(
+    (t) => new Date(t.date) >= startOfToday,
   );
 
   const totalPemasukan = todayTransactions
@@ -160,7 +166,7 @@ function Dashboard() {
     .reduce((sum, t) => sum + t.amount, 0);
 
   const pengeluaranBelanja = todayTransactions
-    .filter((t) => t.type === "OUT" && t.category === "belanja")
+    .filter((t) => t.type === "OUT" && t.category !== "tarik")
     .reduce((sum, t) => sum + t.amount, 0);
 
   const pengeluaranTarik = todayTransactions

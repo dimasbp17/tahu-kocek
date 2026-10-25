@@ -57,14 +57,18 @@ export default function LaporanTab({ transactions }: Props) {
     const laba = filtered
       .filter((t) => t.type === "IN")
       .reduce((sum, t) => sum + (t.netProfit || 0), 0);
-    const pengeluaran = filtered
-      .filter((t) => t.type === "OUT")
+    // Tarik laba bukan biaya, jadi dipisah dari belanja bahan
+    const belanja = filtered
+      .filter((t) => t.type === "OUT" && t.category !== "tarik")
+      .reduce((sum, t) => sum + t.amount, 0);
+    const tarik = filtered
+      .filter((t) => t.type === "OUT" && t.category === "tarik")
       .reduce((sum, t) => sum + t.amount, 0);
     const porsi = filtered
       .filter((t) => t.type === "IN")
       .reduce((sum, t) => sum + (t.qty || 0), 0);
-    const labaReal = omset - pengeluaran;
-    return { omset, laba, pengeluaran, porsi, labaReal };
+    const labaReal = omset - belanja;
+    return { omset, laba, belanja, tarik, porsi, labaReal };
   }, [filtered]);
 
   const konfirmasiHapus = async () => {
@@ -154,12 +158,17 @@ export default function LaporanTab({ transactions }: Props) {
               <div className="flex items-center gap-1 text-rose-700 mb-1">
                 <TrendingDown size={12} />
                 <span className="text-[10px] font-bold uppercase">
-                  Total Keluar
+                  Belanja Bahan
                 </span>
               </div>
               <p className="text-sm font-bold text-rose-900">
-                Rp {summary.pengeluaran.toLocaleString("id-ID")}
+                Rp {summary.belanja.toLocaleString("id-ID")}
               </p>
+              {summary.tarik > 0 && (
+                <p className="text-[10px] text-rose-600 mt-0.5">
+                  Tarik laba Rp {summary.tarik.toLocaleString("id-ID")}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -201,7 +210,7 @@ export default function LaporanTab({ transactions }: Props) {
               <p
                 className={`text-[10px] mt-0.5 ${summary.labaReal >= 0 ? "text-blue-600" : "text-rose-600"}`}
               >
-                Omset - Semua Keluar
+                Omset - Belanja Bahan
               </p>
             </CardContent>
           </Card>

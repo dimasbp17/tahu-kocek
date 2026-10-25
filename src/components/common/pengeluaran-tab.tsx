@@ -21,13 +21,17 @@ export default function PengeluaranTab({ onSuccess }: Props) {
   const [tipeKeluar, setTipeKeluar] = useState<"belanja" | "tarik">("belanja");
   const [nominal, setNominal] = useState("");
   const [keterangan, setKeterangan] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const simpanPengeluaran = async () => {
+    // Cegah transaksi dobel saat tombol ditekan berkali-kali
+    if (saving) return;
     if (!nominal || !keterangan) {
       toast.error("Isi nominal dan keterangan dulu ya!");
       return;
     }
 
+    setSaving(true);
     try {
       await addDoc(collection(db, "transaksi"), {
         type: "OUT",
@@ -48,6 +52,8 @@ export default function PengeluaranTab({ onSuccess }: Props) {
       onSuccess();
     } catch (e) {
       toast.error("Gagal menyimpan: " + e);
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -114,11 +120,14 @@ export default function PengeluaranTab({ onSuccess }: Props) {
 
         <Button
           onClick={simpanPengeluaran}
+          disabled={saving}
           className={`w-full  ${tipeKeluar === "tarik" ? "bg-amber-600 hover:bg-amber-700" : "bg-rose-600 hover:bg-rose-700"}`}
         >
-          {tipeKeluar === "tarik"
-            ? "Simpan Penarikan Laba"
-            : "Simpan Pengeluaran"}
+          {saving
+            ? "Menyimpan..."
+            : tipeKeluar === "tarik"
+              ? "Simpan Penarikan Laba"
+              : "Simpan Pengeluaran"}
         </Button>
       </CardContent>
     </Card>
