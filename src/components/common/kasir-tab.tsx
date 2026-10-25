@@ -38,6 +38,14 @@ export default function KasirTab({ settings, onSuccess }: Props) {
   const simpanPesanan = () => {
     // Cegah transaksi dobel saat tombol ditekan berkali-kali
     if (saving) return;
+    if (!Number.isInteger(diskonPratinjau) || diskonPratinjau < 0) {
+      toast.error("Potongan voucher harus angka bulat, tidak boleh minus");
+      return;
+    }
+    if (diskonPratinjau > qty * hargaPratinjau) {
+      toast.error("Potongan voucher melebihi harga jual");
+      return;
+    }
     setSaving(true);
     try {
       const online = tulisOffline(
@@ -77,7 +85,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
       : 0;
 
   const diskonPratinjau =
-    tipePesanan === "shopee" && potonganVoucher ? parseInt(potonganVoucher) : 0;
+    tipePesanan === "shopee" && potonganVoucher ? Number(potonganVoucher) : 0;
 
   const totalHarga = Math.max(
     0,
@@ -145,6 +153,7 @@ export default function KasirTab({ settings, onSuccess }: Props) {
             <Label className="text-blue-800">Potongan Voucher (Rp)</Label>
             <Input
               type="number"
+              min={0}
               value={potonganVoucher}
               onChange={(e) => setPotonganVoucher(e.target.value)}
               placeholder="Contoh: 3000"

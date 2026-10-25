@@ -30,6 +30,11 @@ export default function PengeluaranTab({ onSuccess }: Props) {
       toast.error("Isi nominal dan keterangan dulu ya!");
       return;
     }
+    const jumlah = Number(nominal);
+    if (!Number.isInteger(jumlah) || jumlah <= 0) {
+      toast.error("Nominal harus angka bulat lebih dari 0");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -37,7 +42,7 @@ export default function PengeluaranTab({ onSuccess }: Props) {
         addDoc(collection(db, "transaksi"), {
           type: "OUT",
           category: tipeKeluar, // Menandai apakah ini belanja modal atau tarik laba
-          amount: parseInt(nominal),
+          amount: jumlah,
           date: new Date().toISOString(),
           ...dataPencatat(),
           desc:
@@ -101,6 +106,7 @@ export default function PengeluaranTab({ onSuccess }: Props) {
           <Label>Nominal (Rp)</Label>
           <Input
             type="number"
+            min={1}
             value={nominal}
             onChange={(e) => setNominal(e.target.value)}
             placeholder="Contoh: 50000"

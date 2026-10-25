@@ -136,7 +136,7 @@ export default function LaporanTab({ transactions }: Props) {
               <div className="flex items-center gap-1 text-emerald-700 mb-1">
                 <ShoppingBag size={12} />
                 <span className="text-[10px] font-bold uppercase">
-                  Omset Kotor
+                  Pendapatan
                 </span>
               </div>
               <p className="text-sm font-bold text-emerald-900">
@@ -175,13 +175,15 @@ export default function LaporanTab({ transactions }: Props) {
               <div className="flex items-center gap-1 text-amber-700 mb-1">
                 <TrendingUp size={12} />
                 <span className="text-[10px] font-bold uppercase">
-                  Laba per Porsi
+                  Estimasi Laba
                 </span>
               </div>
               <p className="text-sm font-bold text-amber-900">
                 Rp {summary.laba.toLocaleString("id-ID")}
               </p>
-              <p className="text-[10px] text-amber-600 mt-0.5">Setelah HPP</p>
+              <p className="text-[10px] text-amber-600 mt-0.5">
+                Pendapatan − HPP
+              </p>
             </CardContent>
           </Card>
 
@@ -205,7 +207,7 @@ export default function LaporanTab({ transactions }: Props) {
               <p
                 className={`text-[10px] mt-0.5 ${summary.labaReal >= 0 ? "text-blue-600" : "text-rose-600"}`}
               >
-                Omset - Belanja Bahan
+                Pendapatan − Belanja Bahan
               </p>
             </CardContent>
           </Card>

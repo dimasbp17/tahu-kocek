@@ -330,6 +330,11 @@ function Dashboard() {
     .filter((t) => t.type === "OUT" && t.category === "tarik")
     .reduce((sum, t) => sum + t.amount, 0);
 
+  // Pendapatan Shopee masuk ke saldo merchant, bukan tunai di laci
+  const pendapatanShopee = todayTransactions
+    .filter((t) => t.type === "IN" && t.source === "shopee")
+    .reduce((sum, t) => sum + t.amount, 0);
+
   const arusKas = totalPemasukan - pengeluaranBelanja - pengeluaranTarik;
   const labaReal = totalPemasukan - pengeluaranBelanja;
 
@@ -345,10 +350,16 @@ function Dashboard() {
     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500 lg:grid lg:grid-cols-3 lg:gap-4 lg:space-y-0">
       <Card className="border-blue-100 shadow-md lg:col-span-2">
         <CardHeader className="pb-2">
-          <CardDescription>Uang di Tangan Hari Ini</CardDescription>
+          <CardDescription>Arus Kas Hari Ini</CardDescription>
           <CardTitle className="text-4xl text-zinc-900 font-semibold">
             Rp {arusKas.toLocaleString("id-ID")}
           </CardTitle>
+          {pendapatanShopee > 0 && (
+            <p className="text-xs text-zinc-500">
+              Termasuk Rp {pendapatanShopee.toLocaleString("id-ID")} dari Shopee
+              Food (masuk ke saldo merchant, bukan tunai)
+            </p>
+          )}
         </CardHeader>
       </Card>
 
@@ -357,13 +368,13 @@ function Dashboard() {
           <CardContent>
             <div className="flex items-center gap-2 text-emerald-700 mb-2">
               <ShoppingBag size={16} />
-              <span className="text-xs font-bold uppercase">Omset Kotor</span>
+              <span className="text-xs font-bold uppercase">Pendapatan</span>
             </div>
             <p className="text-lg font-bold text-emerald-900">
               Rp {totalPemasukan.toLocaleString("id-ID")}
             </p>
             <p className="text-xs text-emerald-600 mt-1">
-              {porsiLaku} Porsi Terjual
+              {porsiLaku} porsi · setelah komisi & voucher
             </p>
           </CardContent>
         </Card>
@@ -372,14 +383,12 @@ function Dashboard() {
           <CardContent>
             <div className="flex items-center gap-2 text-amber-700 mb-2">
               <TrendingUp size={16} />
-              <span className="text-xs font-bold uppercase">
-                Laba per Porsi
-              </span>
+              <span className="text-xs font-bold uppercase">Estimasi Laba</span>
             </div>
             <p className="text-lg font-bold text-amber-900">
               Rp {labaPerPorsi.toLocaleString("id-ID")}
             </p>
-            <p className="text-xs text-amber-600 mt-1">Setelah HPP</p>
+            <p className="text-xs text-amber-600 mt-1">Pendapatan − HPP</p>
           </CardContent>
         </Card>
       </div>
@@ -399,7 +408,7 @@ function Dashboard() {
 
           <div className="space-y-1 text-sm text-zinc-600">
             <div className="flex justify-between">
-              <span>Omset Kotor</span>
+              <span>Pendapatan</span>
               <span className="font-semibold text-zinc-800">
                 Rp {totalPemasukan.toLocaleString("id-ID")}
               </span>
